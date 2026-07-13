@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+coverage/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Prisma
+prisma/*.db
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Test artifacts
+.jest-cache/

@@ -1,0 +1,50 @@
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://lms_app:${MYSQL_APP_PASSWORD:-changeme}@mysql:3306/lms_db
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a real secret in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set a real secret in .env}
+      COOKIE_SECRET: ${COOKIE_SECRET:?set a real secret in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      TRUST_PROXY: 'true'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme-root}
+      MYSQL_DATABASE: lms_db
+      MYSQL_USER: lms_app
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-changeme}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    # No ports exposed to the host by default — only the app container reaches
+    # the database over the internal compose network.
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
