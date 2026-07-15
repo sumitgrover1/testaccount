@@ -1,3 +1,4 @@
+import ms from 'ms';
 import type { NextFunction, Request, Response } from 'express';
 import { ForbiddenError } from '../common/errors/AppError';
 import { generateSecureToken, timingSafeEqual } from '../common/utils/crypto';
@@ -19,6 +20,10 @@ export function issueCsrfCookie(res: Response): string {
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
+    // Mirrors the refresh cookie's lifetime (see auth.controller.ts) — this
+    // cookie only exists to protect the refresh-token cookie, so it should
+    // never outlive or fall short of it.
+    maxAge: ms(env.JWT_REFRESH_EXPIRY),
   });
   return token;
 }

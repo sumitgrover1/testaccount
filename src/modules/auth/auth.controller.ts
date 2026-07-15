@@ -1,3 +1,4 @@
+import ms from 'ms';
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../common/utils/asyncHandler';
 import { env } from '../../config/env';
@@ -24,6 +25,11 @@ function setRefreshCookie(res: Response, token: string): void {
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: REFRESH_COOKIE_PATH,
+    // Without an explicit maxAge this would default to a session cookie
+    // (cleared when the browser closes), which would silently cut every
+    // session down to "until you close the tab" regardless of the refresh
+    // token's actual (7d default) validity — match the two explicitly.
+    maxAge: ms(env.JWT_REFRESH_EXPIRY),
   });
 }
 

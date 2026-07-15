@@ -6,6 +6,8 @@ attribution, and reporting). Built with Node.js, Express, and TypeScript.
 Security- and compliance-minded by default — see [SECURITY.md](./SECURITY.md)
 for the full list of controls.
 
+A companion admin panel that consumes this API lives in [`frontend/`](./frontend/README.md) (Next.js + React + TypeScript).
+
 ## Stack
 
 | Concern         | Choice                                   |

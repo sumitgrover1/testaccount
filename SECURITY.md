@@ -33,7 +33,7 @@ defends against:
 **Authentication**
 - Only clinic staff authenticate against this API — patients are a managed data entity, never an authenticated principal, so there is no public self-registration endpoint (staff accounts are admin-provisioned via `POST /users`).
 - Passwords hashed with argon2id (OWASP-recommended), never stored or logged in plaintext.
-- JWT access tokens (short-lived, 15m default) + rotating refresh tokens (httpOnly, `SameSite=Strict` cookie).
+- JWT access tokens (short-lived, 15m default) + rotating refresh tokens (httpOnly, `SameSite=Strict` cookie, `maxAge` matching `JWT_REFRESH_EXPIRY` so the cookie's lifetime doesn't silently fall back to "until the browser closes").
 - Refresh tokens are single-use; reuse of an already-rotated token revokes all sessions for that user (stolen-token detection).
 - Per-account lockout after repeated failed logins, in addition to IP-based rate limiting on auth endpoints.
 - Login responses are identical for "no such user" and "wrong password" to prevent account enumeration.
@@ -43,6 +43,7 @@ defends against:
 - Role-based access control across eight staff roles (`SUPER_ADMIN`, `CLINIC_OWNER`, `DOCTOR`, `RECEPTIONIST`, `COUNSELOR`, `INVENTORY_MANAGER`, `ACCOUNTANT`, `MARKETING_TEAM`), enforced in middleware, with per-resource ownership checks in service code (e.g. a counselor's pricing discretion is capped by `PRICING_MAX_UNAPPROVED_DISCOUNT_PERCENT`, beyond which a doctor/admin must approve).
 - Access-token verification re-checks the user's current `isActive`/lockout state on every request, so a disabled account or role change takes effect immediately rather than waiting out token expiry.
 - Elevated fields (`role`, `isActive`) are only ever settable via a dedicated admin-only endpoint/schema — never accepted on the self-service profile-update path, preventing privilege-escalation via mass assignment.
+- Staff *directory* reads (`GET /users`, `GET /users/:id`) are open to any authenticated staff member — needed for assignment dropdowns (doctor/therapist pickers) in the appointments/enrollments UI — but only ever return the same non-sensitive public fields (name, role, active status). Creating or mutating an account (`POST`/`PATCH /users`) remains admin-only.
 
 **Input handling**
 - All request input validated (and unknown fields stripped) via `zod` schemas before it reaches business logic.
@@ -75,6 +76,11 @@ defends against:
 **Supply chain / CI**
 - CI runs `npm audit`, ESLint (including `eslint-plugin-security`), TypeScript strict-mode type checking, and CodeQL static analysis on every push/PR.
 - Docker image is a multi-stage build that ships only production dependencies and runs as a non-root user.
+
+**Frontend (`frontend/`)**
+- The access token is kept in memory only (never `localStorage`/`sessionStorage`), so it isn't readable by an injected script; only the httpOnly refresh cookie persists across reloads, and the frontend calls `/auth/refresh` once on load to restore a session from it.
+- The CSRF cookie's value is read from `document.cookie` (by design non-httpOnly) and echoed back as `X-CSRF-Token` only on the refresh/logout requests that need it — never attached to unrelated requests.
+- `CORS_ORIGIN` on the backend must explicitly list the frontend's origin(s); there is no wildcard fallback.
 
 ## Known gaps / recommended next steps
 

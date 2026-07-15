@@ -26,18 +26,12 @@ router.post(
   validate({ body: createStaffSchema }),
   userController.createStaffUser,
 );
-router.get(
-  '/',
-  authorize(...ADMIN_ROLES),
-  validate({ query: listUsersQuerySchema }),
-  userController.listUsers,
-);
-router.get(
-  '/:id',
-  authorize(...ADMIN_ROLES),
-  validate({ params: idParamSchema }),
-  userController.getUser,
-);
+// Listing/reading staff is open to any authenticated staff member (needed for
+// assignment dropdowns — doctor/therapist pickers on appointments and
+// enrollments) since the response never exposes anything beyond the public
+// staff-directory fields; only creating/mutating accounts is admin-only.
+router.get('/', validate({ query: listUsersQuerySchema }), userController.listUsers);
+router.get('/:id', validate({ params: idParamSchema }), userController.getUser);
 router.patch(
   '/:id',
   authorize(...ADMIN_ROLES),
