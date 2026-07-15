@@ -1,7 +1,7 @@
 {
-  "name": "lms-backend",
+  "name": "clinic-management-backend",
   "version": "1.0.0",
-  "description": "Enterprise-grade Learning Management System backend (Node.js + Express + TypeScript)",
+  "description": "Enterprise-grade Clinic Management Platform backend (Node.js + Express + TypeScript)",
   "private": true,
   "license": "UNLICENSED",
   "engines": {

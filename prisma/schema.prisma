@@ -7,32 +7,178 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
 enum Role {
-  ADMIN
-  INSTRUCTOR
-  STUDENT
+  SUPER_ADMIN
+  CLINIC_OWNER
+  DOCTOR
+  RECEPTIONIST
+  COUNSELOR
+  INVENTORY_MANAGER
+  ACCOUNTANT
+  MARKETING_TEAM
 }
 
-enum CourseStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PatientDocumentType {
+  BEFORE_IMAGE
+  AFTER_IMAGE
+  CONSENT_FORM
+  DOCUMENT
+  OTHER
+}
+
+enum LeadSource {
+  FACEBOOK_ADS
+  GOOGLE_ADS
+  WEBSITE_FORM
+  WALK_IN
+  PHONE_CALL
+  WHATSAPP
+  INSTAGRAM
+  REFERRAL
+}
+
+// Pipeline states plus terminal non-conversion states, per the clinic's lead
+// pipeline definition. Ordering here is documentation only — transitions are
+// enforced in application code (lead.service.ts), not by the enum itself.
+enum LeadStatus {
+  NEW
+  CONTACTED
+  INTERESTED
+  CONSULTATION_SCHEDULED
+  VISITED_CLINIC
+  TREATMENT_DISCUSSION
+  HOT_LEAD
+  PACKAGE_SHARED
+  CONVERTED
+  COLD
+  LOST
+  DUPLICATE
+  INVALID
+  NO_RESPONSE
 }
 
 enum EnrollmentStatus {
-  ACTIVE
+  PENDING
+  RUNNING
   COMPLETED
-  DROPPED
+  CANCELLED
 }
 
-/// Application users. Passwords are never stored in plaintext (argon2id hash only).
+enum AppointmentStatus {
+  BOOKED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+}
+
+enum StockMovementType {
+  PURCHASE
+  CONSUMPTION
+  DAMAGE
+  EXPIRY
+  ADJUSTMENT
+  RETURN
+}
+
+enum OcrStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  MANUALLY_CORRECTED
+}
+
+enum PricingApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PriceEntityType {
+  TREATMENT
+  PACKAGE
+  PATIENT_TREATMENT_PRICE
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CARD
+  SPLIT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum InvoiceItemType {
+  TREATMENT
+  PACKAGE
+  PRODUCT
+}
+
+enum CommunicationChannel {
+  CALL
+  WHATSAPP
+  SMS
+  EMAIL
+  NOTE
+  SYSTEM
+}
+
+enum CommunicationDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum FollowUpChannel {
+  CALL
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+enum FollowUpStatus {
+  PENDING
+  DONE
+  MISSED
+  CANCELLED
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+/// Clinic staff accounts. Patients are not authenticated users of this system —
+/// they are a managed data entity (see Patient below).
 model User {
   id               String    @id @default(uuid())
   email            String    @unique
   passwordHash     String
   firstName        String
   lastName         String
-  role             Role      @default(STUDENT)
+  role             Role
   isEmailVerified  Boolean   @default(false)
   isActive         Boolean   @default(true)
   failedLoginCount Int       @default(0)
@@ -41,19 +187,30 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  refreshTokens  RefreshToken[]
-  resetTokens    PasswordResetToken[]
-  coursesTaught  Course[]             @relation("InstructorCourses")
-  enrollments    Enrollment[]
-  submissions    Submission[]
-  auditLogs      AuditLog[]
+  refreshTokens         RefreshToken[]
+  resetTokens           PasswordResetToken[]
+  auditLogs             AuditLog[]
+  createdPatients       Patient[]                 @relation("PatientCreatedBy")
+  assignedLeads         Lead[]                    @relation("LeadAssignedCounselor")
+  leadStatusChanges     LeadStatusHistory[]
+  doctorEnrollments     TreatmentEnrollment[]     @relation("EnrollmentDoctor")
+  therapistEnrollments  TreatmentEnrollment[]     @relation("EnrollmentTherapist")
+  performedSessions     TreatmentSession[]
+  doctorAppointments    Appointment[]             @relation("AppointmentDoctor")
+  pricingRequests       PricingApprovalRequest[]  @relation("PricingRequestedBy")
+  pricingReviews        PricingApprovalRequest[]  @relation("PricingReviewedBy")
+  priceChanges          PriceHistory[]
+  followUpsAssigned     FollowUp[]                @relation("FollowUpAssignedTo")
+  followUpsEscalated    FollowUp[]                @relation("FollowUpEscalatedTo")
+  communications        CommunicationLog[]
+  payments              Payment[]
+  purchaseInvoices      PurchaseInvoice[]
+  stockMovements        StockMovement[]
 
   @@index([role])
   @@map("users")
 }
 
-/// Refresh tokens are stored hashed (SHA-256) — the raw token only ever exists client-side.
-/// Rotation on use (replacedBy) allows reuse detection for stolen-token scenarios.
 model RefreshToken {
   id         String    @id @default(uuid())
   tokenHash  String    @unique
@@ -83,106 +240,691 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-model Course {
-  id           String       @id @default(uuid())
-  title        String
-  slug         String       @unique
-  description  String       @db.Text
-  status       CourseStatus @default(DRAFT)
-  instructorId String
-  instructor   User         @relation("InstructorCourses", fields: [instructorId], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+// ---------------------------------------------------------------------------
+// Patients
+// ---------------------------------------------------------------------------
 
-  modules     Module[]
-  enrollments Enrollment[]
-  assignments Assignment[]
+/// Centralized patient profile. `patientNumber` is a DB-level auto-increment
+/// used to derive the human-readable, globally unique Patient ID (e.g. PT-000123)
+/// at the application layer (see patient.service.ts) — MySQL allows only one
+/// auto-increment column per table, so the primary key stays a UUID.
+model Patient {
+  id                       String        @id @default(uuid())
+  patientNumber            Int           @unique @default(autoincrement())
+  fullName                 String
+  mobileNumber             String        @unique
+  gender                   Gender
+  dateOfBirth              DateTime?
+  age                      Int?
+  city                     String
+  state                    String
+  registrationDate         DateTime      @default(now())
+  createdById              String
+  createdBy                User          @relation("PatientCreatedBy", fields: [createdById], references: [id])
+  status                   PatientStatus @default(ACTIVE)
 
-  @@index([instructorId])
+  email                    String?
+  address                  String?       @db.Text
+  occupation               String?
+  referralSource           String?
+  notes                    String?       @db.Text
+
+  allergies                String?       @db.Text
+  existingDiseases         String?       @db.Text
+  currentMedication        String?       @db.Text
+  previousTreatmentHistory String?       @db.Text
+
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  originatingLead          Lead?
+  documents                PatientDocument[]
+  enrollments              TreatmentEnrollment[]
+  appointments             Appointment[]
+  invoices                 Invoice[]
+  communications           CommunicationLog[]
+  followUps                FollowUp[]
+  patientTreatmentPrices   PatientTreatmentPrice[]
+  pricingRequests          PricingApprovalRequest[]
+
   @@index([status])
-  @@map("courses")
+  @@index([city, state])
+  @@map("patients")
 }
 
-model Module {
-  id        String   @id @default(uuid())
-  title     String
-  order     Int
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model PatientDocument {
+  id          String              @id @default(uuid())
+  patientId   String
+  patient     Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type        PatientDocumentType
+  fileUrl     String
+  fileName    String
+  notes       String?             @db.Text
+  uploadedById String
+  uploadedAt  DateTime            @default(now())
 
-  lessons Lesson[]
-
-  @@index([courseId])
-  @@map("modules")
+  @@index([patientId])
+  @@index([type])
+  @@map("patient_documents")
 }
 
-model Lesson {
-  id        String   @id @default(uuid())
-  title     String
-  content   String   @db.LongText
-  order     Int
-  moduleId  String
-  module    Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ---------------------------------------------------------------------------
+// Marketing & leads
+// ---------------------------------------------------------------------------
 
-  @@index([moduleId])
-  @@map("lessons")
+model Campaign {
+  id            String     @id @default(uuid())
+  name          String
+  source        LeadSource
+  adSet         String?
+  ad             String?
+  keyword       String?
+  landingPage   String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmTerm       String?
+  utmContent    String?
+  costPerLead   Decimal?   @db.Decimal(10, 2)
+  totalSpend    Decimal?   @db.Decimal(12, 2)
+  startDate     DateTime?
+  endDate       DateTime?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  leads         Lead[]
+
+  @@index([source])
+  @@map("campaigns")
 }
 
-model Enrollment {
-  id          String           @id @default(uuid())
-  studentId   String
-  student     User             @relation(fields: [studentId], references: [id])
-  courseId    String
-  course      Course           @relation(fields: [courseId], references: [id])
-  status      EnrollmentStatus @default(ACTIVE)
-  enrolledAt  DateTime         @default(now())
-  completedAt DateTime?
+/// Enquiries from ad platforms, website forms, walk-ins, etc. land here first;
+/// see lead.service.ts for the pipeline transitions and lead -> patient conversion.
+model Lead {
+  id                     String     @id @default(uuid())
+  leadNumber             Int        @unique @default(autoincrement())
+  fullName               String
+  mobileNumber           String
+  email                  String?
+  interestedTreatmentId  String?
+  interestedTreatment    Treatment? @relation(fields: [interestedTreatmentId], references: [id])
+  source                 LeadSource
+  campaignId             String?
+  campaign               Campaign?  @relation(fields: [campaignId], references: [id])
+  assignedCounselorId    String?
+  assignedCounselor      User?      @relation("LeadAssignedCounselor", fields: [assignedCounselorId], references: [id])
+  lastFollowUpAt         DateTime?
+  nextFollowUpAt         DateTime?
+  leadScore              Int        @default(0)
+  notes                  String?    @db.Text
+  status                 LeadStatus @default(NEW)
 
-  @@unique([studentId, courseId])
-  @@index([courseId])
-  @@map("enrollments")
+  convertedPatientId     String?    @unique
+  convertedPatient       Patient?   @relation(fields: [convertedPatientId], references: [id])
+  convertedAt            DateTime?
+
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  statusHistory          LeadStatusHistory[]
+  followUps              FollowUp[]
+  communications         CommunicationLog[]
+
+  @@index([status])
+  @@index([source])
+  @@index([assignedCounselorId])
+  @@map("leads")
 }
 
-model Assignment {
+/// Append-only pipeline transition trail — powers conversion-funnel reporting
+/// and is preserved verbatim when a lead converts to a patient.
+model LeadStatusHistory {
+  id          String      @id @default(uuid())
+  leadId      String
+  lead        Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus  LeadStatus?
+  toStatus    LeadStatus
+  // Nullable: leads captured automatically (public web form, ad-platform
+  // webhook) have no acting staff user for the initial "Lead captured" entry.
+  changedById String?
+  changedBy   User?       @relation(fields: [changedById], references: [id])
+  notes       String?     @db.Text
+  changedAt   DateTime    @default(now())
+
+  @@index([leadId])
+  @@map("lead_status_history")
+}
+
+// ---------------------------------------------------------------------------
+// Treatments & packages
+// ---------------------------------------------------------------------------
+
+model Treatment {
+  id               String   @id @default(uuid())
+  name             String
+  category         String
+  description      String?  @db.Text
+  defaultPrice     Decimal  @db.Decimal(10, 2)
+  durationMinutes  Int
+  numberOfSessions Int      @default(1)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  leads                  Lead[]
+  packageItems           PackageTreatment[]
+  enrollmentItems        TreatmentEnrollmentItem[]
+  appointments           Appointment[]
+  consumptionRules       ProductConsumptionRule[]
+  patientPrices          PatientTreatmentPrice[]
+  pricingRequests        PricingApprovalRequest[]
+  invoiceItems           InvoiceItem[]
+
+  @@index([category])
+  @@index([isActive])
+  @@map("treatments")
+}
+
+model Package {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?  @db.Text
+  defaultPrice    Decimal  @db.Decimal(10, 2)
+  discountPercent Decimal? @db.Decimal(5, 2)
+  validityDays    Int?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items           PackageTreatment[]
+  enrollments     TreatmentEnrollment[]
+  pricingRequests PricingApprovalRequest[]
+  invoiceItems    InvoiceItem[]
+
+  @@index([isActive])
+  @@map("packages")
+}
+
+model PackageTreatment {
   id          String    @id @default(uuid())
-  title       String
-  description String    @db.Text
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  dueDate     DateTime?
-  maxScore    Int       @default(100)
+  packageId   String
+  package     Package   @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  treatmentId String
+  treatment   Treatment @relation(fields: [treatmentId], references: [id])
+  quantity    Int       @default(1)
+
+  @@unique([packageId, treatmentId])
+  @@map("package_treatments")
+}
+
+// ---------------------------------------------------------------------------
+// Pricing engine
+// ---------------------------------------------------------------------------
+
+/// Patient-specific price override for a treatment. Package-level and global
+/// pricing live on Package/Treatment directly; this table is only for the
+/// per-patient exception case.
+model PatientTreatmentPrice {
+  id          String    @id @default(uuid())
+  patientId   String
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  treatmentId String
+  treatment   Treatment @relation(fields: [treatmentId], references: [id])
+  price       Decimal   @db.Decimal(10, 2)
+  createdById String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  submissions Submission[]
-
-  @@index([courseId])
-  @@map("assignments")
+  @@unique([patientId, treatmentId])
+  @@map("patient_treatment_prices")
 }
 
-model Submission {
-  id           String     @id @default(uuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  studentId    String
-  student      User       @relation(fields: [studentId], references: [id])
-  content      String     @db.Text
-  score        Int?
-  feedback     String?    @db.Text
-  submittedAt  DateTime   @default(now())
-  gradedAt     DateTime?
+/// A counselor proposing a price below the configured discount threshold must
+/// get doctor/admin sign-off before it can be applied; see pricing.service.ts.
+model PricingApprovalRequest {
+  id             String                 @id @default(uuid())
+  requestedById  String
+  requestedBy    User                   @relation("PricingRequestedBy", fields: [requestedById], references: [id])
+  patientId      String
+  patient        Patient                @relation(fields: [patientId], references: [id])
+  treatmentId    String?
+  treatment      Treatment?             @relation(fields: [treatmentId], references: [id])
+  packageId      String?
+  package        Package?               @relation(fields: [packageId], references: [id])
+  proposedPrice  Decimal                @db.Decimal(10, 2)
+  thresholdPrice Decimal                @db.Decimal(10, 2)
+  status         PricingApprovalStatus  @default(PENDING)
+  reviewedById   String?
+  reviewedBy     User?                  @relation("PricingReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt     DateTime?
+  reason         String?                @db.Text
+  createdAt      DateTime               @default(now())
 
-  @@unique([assignmentId, studentId])
-  @@map("submissions")
+  @@index([status])
+  @@index([patientId])
+  @@map("pricing_approval_requests")
 }
 
-/// Immutable audit trail for security-relevant and compliance-relevant actions
-/// (auth events, role changes, grade changes, data access to PII). Write-only from
-/// the application; retention/export handled by ops per the org's compliance policy.
+/// Append-only price change log across all three pricing levels, never edited
+/// or deleted — required for pricing audit/compliance.
+model PriceHistory {
+  id          String          @id @default(uuid())
+  entityType  PriceEntityType
+  entityId    String
+  oldPrice    Decimal?        @db.Decimal(10, 2)
+  newPrice    Decimal         @db.Decimal(10, 2)
+  changedById String
+  changedBy   User            @relation(fields: [changedById], references: [id])
+  reason      String?         @db.Text
+  changedAt   DateTime        @default(now())
+
+  @@index([entityType, entityId])
+  @@map("price_history")
+}
+
+// ---------------------------------------------------------------------------
+// Treatment enrollment & sessions
+// ---------------------------------------------------------------------------
+
+/// A patient's enrollment into one or more treatments, or a package. Each
+/// treatment line (with its own session count/progress) lives in
+/// TreatmentEnrollmentItem so a single enrollment can cover multiple treatments.
+model TreatmentEnrollment {
+  id                 String           @id @default(uuid())
+  patientId          String
+  patient            Patient          @relation(fields: [patientId], references: [id])
+  packageId          String?
+  package            Package?         @relation(fields: [packageId], references: [id])
+  enrollmentDate     DateTime         @default(now())
+  status             EnrollmentStatus @default(PENDING)
+  expiryDate         DateTime?
+  assignedDoctorId   String
+  assignedDoctor     User             @relation("EnrollmentDoctor", fields: [assignedDoctorId], references: [id])
+  assignedTherapistId String?
+  assignedTherapist  User?            @relation("EnrollmentTherapist", fields: [assignedTherapistId], references: [id])
+  totalPrice         Decimal          @db.Decimal(10, 2)
+  createdById        String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  items              TreatmentEnrollmentItem[]
+  invoiceItems       InvoiceItem[]
+
+  @@index([patientId])
+  @@index([status])
+  @@map("treatment_enrollments")
+}
+
+model TreatmentEnrollmentItem {
+  id                String           @id @default(uuid())
+  enrollmentId      String
+  enrollment        TreatmentEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  treatmentId       String
+  treatment         Treatment        @relation(fields: [treatmentId], references: [id])
+  sessionsTotal     Int
+  sessionsCompleted Int              @default(0)
+  price             Decimal          @db.Decimal(10, 2)
+  status            EnrollmentStatus @default(PENDING)
+
+  sessions          TreatmentSession[]
+
+  @@index([enrollmentId])
+  @@map("treatment_enrollment_items")
+}
+
+/// One performed session — the point where product consumption and
+/// appointment completion actually connect to session-count progress.
+model TreatmentSession {
+  id              String      @id @default(uuid())
+  enrollmentItemId String
+  enrollmentItem  TreatmentEnrollmentItem @relation(fields: [enrollmentItemId], references: [id], onDelete: Cascade)
+  appointmentId   String?     @unique
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id])
+  performedById   String
+  performedBy     User        @relation(fields: [performedById], references: [id])
+  performedAt     DateTime    @default(now())
+  notes           String?     @db.Text
+
+  consumptions    ProductConsumption[]
+
+  @@index([enrollmentItemId])
+  @@map("treatment_sessions")
+}
+
+// ---------------------------------------------------------------------------
+// Appointments
+// ---------------------------------------------------------------------------
+
+model Appointment {
+  id                String            @id @default(uuid())
+  appointmentNumber Int               @unique @default(autoincrement())
+  patientId         String
+  patient           Patient           @relation(fields: [patientId], references: [id])
+  doctorId          String
+  doctor            User              @relation("AppointmentDoctor", fields: [doctorId], references: [id])
+  treatmentId       String?
+  treatment         Treatment?        @relation(fields: [treatmentId], references: [id])
+  scheduledDate     DateTime
+  status            AppointmentStatus @default(BOOKED)
+  notes             String?           @db.Text
+  createdById       String
+  checkedInAt       DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  rescheduledFromId String?           @unique
+  rescheduledFrom   Appointment?      @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo     Appointment?      @relation("AppointmentReschedule")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  session           TreatmentSession?
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("appointments")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+model Supplier {
+  id            String   @id @default(uuid())
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?  @db.Text
+  gstNumber     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  batches           ProductBatch[]
+  purchaseInvoices  PurchaseInvoice[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  category      String
+  brand         String?
+  unit          String?
+  minimumStock  Decimal  @default(0) @db.Decimal(10, 2)
+  sellingPrice  Decimal? @db.Decimal(10, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  batches            ProductBatch[]
+  consumptionRules   ProductConsumptionRule[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+
+  @@index([category])
+  @@map("products")
+}
+
+model ProductBatch {
+  id             String    @id @default(uuid())
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id])
+  batchNumber    String
+  expiryDate     DateTime
+  purchasePrice  Decimal   @db.Decimal(10, 2)
+  mrp            Decimal?  @db.Decimal(10, 2)
+  sellingPrice   Decimal?  @db.Decimal(10, 2)
+  gstPercent     Decimal?  @db.Decimal(5, 2)
+  currentStock   Decimal   @default(0) @db.Decimal(10, 2)
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  location       String?
+  createdAt      DateTime  @default(now())
+
+  movements       StockMovement[]
+  consumptions    ProductConsumption[]
+  invoiceItems    InvoiceItem[]
+
+  @@unique([productId, batchNumber])
+  @@index([expiryDate])
+  @@map("product_batches")
+}
+
+/// Raw supplier invoice upload + OCR extraction result. See
+/// src/common/providers/ocr.provider.ts for the pluggable OCR interface —
+/// PENDING/FAILED invoices always require the manual-correction flow.
+model PurchaseInvoice {
+  id             String    @id @default(uuid())
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  invoiceNumber  String?
+  invoiceDate    DateTime?
+  rawFileUrl     String
+  ocrStatus      OcrStatus @default(PENDING)
+  ocrRawResponse Json?
+  totalAmount    Decimal?  @db.Decimal(12, 2)
+  createdById    String
+  createdBy      User      @relation(fields: [createdById], references: [id])
+  createdAt      DateTime  @default(now())
+
+  items          PurchaseInvoiceItem[]
+
+  @@index([ocrStatus])
+  @@map("purchase_invoices")
+}
+
+model PurchaseInvoiceItem {
+  id                String          @id @default(uuid())
+  purchaseInvoiceId String
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  productNameRaw    String
+  matchedProductId  String?
+  matchedProduct    Product?        @relation(fields: [matchedProductId], references: [id])
+  batchNumber       String?
+  quantity          Decimal         @db.Decimal(10, 2)
+  mrp               Decimal?        @db.Decimal(10, 2)
+  purchasePrice     Decimal?        @db.Decimal(10, 2)
+  expiryDate        DateTime?
+  gstPercent        Decimal?        @db.Decimal(5, 2)
+  isValidated       Boolean         @default(false)
+
+  @@index([purchaseInvoiceId])
+  @@map("purchase_invoice_items")
+}
+
+/// Every stock change (purchase, consumption, damage, expiry write-off,
+/// manual adjustment, return) is recorded here — this table is the audit
+/// trail for inventory and is never edited after creation.
+model StockMovement {
+  id             String            @id @default(uuid())
+  productBatchId String
+  productBatch   ProductBatch      @relation(fields: [productBatchId], references: [id])
+  type           StockMovementType
+  quantity       Decimal           @db.Decimal(10, 2)
+  referenceType  String?
+  referenceId    String?
+  performedById  String
+  performedBy    User              @relation(fields: [performedById], references: [id])
+  performedAt    DateTime          @default(now())
+  notes          String?           @db.Text
+
+  @@index([productBatchId])
+  @@index([type])
+  @@map("stock_movements")
+}
+
+/// Default bill-of-materials for a treatment (e.g. Hydra Facial consumes
+/// Serum A + Cream B) — used to auto-deduct stock when a session is performed.
+model ProductConsumptionRule {
+  id                 String    @id @default(uuid())
+  treatmentId        String
+  treatment          Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  productId          String
+  product            Product   @relation(fields: [productId], references: [id])
+  quantityPerSession Decimal   @db.Decimal(10, 2)
+
+  @@unique([treatmentId, productId])
+  @@map("product_consumption_rules")
+}
+
+model ProductConsumption {
+  id                 String           @id @default(uuid())
+  treatmentSessionId String
+  treatmentSession   TreatmentSession @relation(fields: [treatmentSessionId], references: [id], onDelete: Cascade)
+  productBatchId     String
+  productBatch       ProductBatch     @relation(fields: [productBatchId], references: [id])
+  quantity           Decimal          @db.Decimal(10, 2)
+  consumedAt         DateTime         @default(now())
+
+  @@index([treatmentSessionId])
+  @@map("product_consumptions")
+}
+
+// ---------------------------------------------------------------------------
+// Billing
+// ---------------------------------------------------------------------------
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  discountPercent Decimal?  @db.Decimal(5, 2)
+  discountAmount  Decimal?  @db.Decimal(10, 2)
+  validFrom       DateTime?
+  validTo         DateTime?
+  maxUses         Int?
+  usedCount       Int       @default(0)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  invoices        Invoice[]
+
+  @@map("coupons")
+}
+
+model Invoice {
+  id                  String        @id @default(uuid())
+  invoiceNumber       Int           @unique @default(autoincrement())
+  patientId           String
+  patient             Patient       @relation(fields: [patientId], references: [id])
+  status              InvoiceStatus @default(DRAFT)
+  subtotal            Decimal       @db.Decimal(12, 2)
+  discountAmount      Decimal       @default(0) @db.Decimal(12, 2)
+  doctorDiscountAmount Decimal      @default(0) @db.Decimal(12, 2)
+  gstAmount           Decimal       @default(0) @db.Decimal(12, 2)
+  couponId            String?
+  coupon              Coupon?       @relation(fields: [couponId], references: [id])
+  totalAmount         Decimal       @db.Decimal(12, 2)
+  createdById         String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  items               InvoiceItem[]
+  payments            Payment[]
+
+  @@index([patientId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String              @id @default(uuid())
+  invoiceId       String
+  invoice         Invoice             @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  itemType        InvoiceItemType
+  treatmentId     String?
+  treatment       Treatment?          @relation(fields: [treatmentId], references: [id])
+  packageId       String?
+  package         Package?            @relation(fields: [packageId], references: [id])
+  enrollmentId    String?
+  enrollment      TreatmentEnrollment? @relation(fields: [enrollmentId], references: [id])
+  productBatchId  String?
+  productBatch    ProductBatch?       @relation(fields: [productBatchId], references: [id])
+  description     String
+  quantity        Decimal             @default(1) @db.Decimal(10, 2)
+  unitPrice       Decimal             @db.Decimal(10, 2)
+  discountPercent Decimal             @default(0) @db.Decimal(5, 2)
+  gstPercent      Decimal             @default(0) @db.Decimal(5, 2)
+  lineTotal       Decimal             @db.Decimal(12, 2)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id             String      @id @default(uuid())
+  invoiceId      String
+  invoice        Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount         Decimal     @db.Decimal(12, 2)
+  mode           PaymentMode
+  transactionRef String?
+  paidAt         DateTime    @default(now())
+  receivedById   String
+  receivedBy     User        @relation(fields: [receivedById], references: [id])
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Follow-ups & communication timeline
+// ---------------------------------------------------------------------------
+
+model FollowUp {
+  id            String         @id @default(uuid())
+  leadId        String?
+  lead          Lead?          @relation(fields: [leadId], references: [id])
+  patientId     String?
+  patient       Patient?       @relation(fields: [patientId], references: [id])
+  assignedToId  String
+  assignedTo    User           @relation("FollowUpAssignedTo", fields: [assignedToId], references: [id])
+  channel       FollowUpChannel
+  dueAt         DateTime
+  status        FollowUpStatus @default(PENDING)
+  completedAt   DateTime?
+  notes         String?        @db.Text
+  escalatedToId String?
+  escalatedTo   User?          @relation("FollowUpEscalatedTo", fields: [escalatedToId], references: [id])
+  createdById   String
+  createdAt     DateTime       @default(now())
+
+  @@index([status])
+  @@index([dueAt])
+  @@index([assignedToId])
+  @@map("follow_ups")
+}
+
+/// Unified communication timeline entry. Appointments/treatments/payments are
+/// not duplicated here — the timeline endpoint (communication.service.ts)
+/// merges this table with those others at query time.
+model CommunicationLog {
+  id          String                 @id @default(uuid())
+  leadId      String?
+  lead        Lead?                  @relation(fields: [leadId], references: [id])
+  patientId   String?
+  patient     Patient?               @relation(fields: [patientId], references: [id])
+  channel     CommunicationChannel
+  direction   CommunicationDirection @default(OUTBOUND)
+  content     String?                @db.Text
+  occurredAt  DateTime               @default(now())
+  createdById String
+  createdBy   User                   @relation(fields: [createdById], references: [id])
+
+  @@index([leadId])
+  @@index([patientId])
+  @@map("communication_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Audit
+// ---------------------------------------------------------------------------
+
+/// Immutable audit trail for security- and compliance-relevant actions across
+/// the whole platform (auth events, pricing overrides, patient record access,
+/// role changes, etc.). Write-only from the application — never updated or
+/// deleted.
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?

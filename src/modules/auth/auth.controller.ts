@@ -8,7 +8,6 @@ import type {
   ChangePasswordInput,
   ForgotPasswordInput,
   LoginInput,
-  RegisterInput,
   ResetPasswordInput,
 } from './auth.validation';
 
@@ -31,17 +30,6 @@ function setRefreshCookie(res: Response, token: string): void {
 function clearRefreshCookie(res: Response): void {
   res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
 }
-
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  const input = req.body as RegisterInput;
-  const { accessToken, refreshToken, userId } = await authService.register(
-    input,
-    requestContext(req),
-  );
-  setRefreshCookie(res, refreshToken);
-  issueCsrfCookie(res);
-  res.status(201).json({ data: { accessToken, userId } });
-});
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const input = req.body as LoginInput;

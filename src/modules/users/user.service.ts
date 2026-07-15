@@ -1,7 +1,13 @@
 import { prisma } from '../../config/database';
-import { NotFoundError } from '../../common/errors/AppError';
+import { ConflictError, NotFoundError } from '../../common/errors/AppError';
+import { hashPassword } from '../../common/utils/password';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
-import type { ListUsersQuery, UpdateProfileInput, UpdateUserAdminInput } from './user.validation';
+import type {
+  CreateStaffInput,
+  ListUsersQuery,
+  UpdateProfileInput,
+  UpdateUserAdminInput,
+} from './user.validation';
 
 // Fields safe to expose to clients — never returns passwordHash or lockout
 // counters, which are internal security state.
@@ -20,6 +26,35 @@ const PUBLIC_USER_SELECT = {
 export async function getUserById(id: string) {
   const user = await prisma.user.findUnique({ where: { id }, select: PUBLIC_USER_SELECT });
   if (!user) throw new NotFoundError('User not found');
+  return user;
+}
+
+export async function createStaffUser(input: CreateStaffInput, actingAdminId: string) {
+  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  if (existing) {
+    throw new ConflictError('An account with this email already exists');
+  }
+
+  const passwordHash = await hashPassword(input.password);
+  const user = await prisma.user.create({
+    data: {
+      email: input.email,
+      passwordHash,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      role: input.role,
+    },
+    select: PUBLIC_USER_SELECT,
+  });
+
+  await recordAudit({
+    userId: actingAdminId,
+    action: 'USER_STAFF_CREATED',
+    resource: 'User',
+    resourceId: user.id,
+    metadata: { role: input.role },
+  });
+
   return user;
 }
 

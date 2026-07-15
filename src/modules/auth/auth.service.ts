@@ -4,17 +4,12 @@ import { Role } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { env } from '../../config/env';
 import { logger } from '../../config/logger';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  UnauthorizedError,
-} from '../../common/errors/AppError';
+import { ForbiddenError, NotFoundError, UnauthorizedError } from '../../common/errors/AppError';
 import { hashPassword, verifyPassword } from '../../common/utils/password';
 import { generateSecureToken, hashToken } from '../../common/utils/crypto';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../../common/utils/jwt';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
-import type { ForgotPasswordInput, LoginInput, RegisterInput } from './auth.validation';
+import type { ForgotPasswordInput, LoginInput } from './auth.validation';
 
 interface RequestContext {
   ipAddress?: string;
@@ -48,41 +43,6 @@ async function issueTokenPair(userId: string, role: Role, ctx: RequestContext): 
   });
 
   return { accessToken, refreshToken };
-}
-
-export async function register(
-  input: RegisterInput,
-  ctx: RequestContext,
-): Promise<TokenPair & { userId: string }> {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existing) {
-    // Registration is allowed to reveal duplicate-email conflicts (unlike login) —
-    // this is standard UX and doesn't expose credential validity.
-    throw new ConflictError('An account with this email already exists');
-  }
-
-  const passwordHash = await hashPassword(input.password);
-  const user = await prisma.user.create({
-    data: {
-      email: input.email,
-      passwordHash,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      role: Role.STUDENT,
-    },
-  });
-
-  const tokens = await issueTokenPair(user.id, user.role, ctx);
-  await recordAudit({
-    userId: user.id,
-    action: 'AUTH_REGISTER',
-    resource: 'User',
-    resourceId: user.id,
-    ipAddress: ctx.ipAddress,
-    userAgent: ctx.userAgent,
-  });
-
-  return { ...tokens, userId: user.id };
 }
 
 export async function login(
