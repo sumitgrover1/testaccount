@@ -87,16 +87,17 @@ npm run dev
 The API is served under `API_PREFIX` (default `/api/v1`); health checks are at
 `/healthz` (liveness) and `/readyz` (readiness, checks DB connectivity).
 
-Since there's no public registration, create the first Super Admin directly:
+Since there's no public registration, create the first Super Admin with the
+seed script:
 
 ```bash
-npx prisma studio
-# In the users table, insert a row with role=SUPER_ADMIN and a passwordHash
-# generated via argon2 (or temporarily call hashPassword() from a REPL).
+SEED_ADMIN_EMAIL=admin@yourclinic.com SEED_ADMIN_PASSWORD='a-strong-passphrase' npm run prisma:seed
 ```
 
-From there, that admin can create every other staff account via
-`POST /api/v1/users`.
+(Omit the env vars to get `admin@clinic.local` / `ChangeMe123!Now` —
+change that password immediately after first login if you rely on the
+default.) From there, that admin can create every other staff account from
+the admin panel's Staff page, or directly via `POST /api/v1/users`.
 
 ### Scripts
 
