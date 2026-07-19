@@ -5,7 +5,8 @@
       powershell -ExecutionPolicy Bypass -File .\setup.ps1
 
   It generates real secrets, writes all three .env files, installs
-  dependencies, runs Prisma migrations + the admin seed script, and opens
+  dependencies, runs Prisma migrations + the admin seed script + a starter
+  treatment/package catalog seed, and opens
   each app's dev server in its own window. Safe to re-run — it never
   overwrites an .env file that already exists.
 
@@ -112,12 +113,17 @@ Push-Location $RepoRoot
 npx prisma migrate dev --name init
 Pop-Location
 
-Write-Host "`n=== 4/5: Seeding first Super Admin account ===" -ForegroundColor Cyan
+Write-Host "`n=== 4/6: Seeding first Super Admin account ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npm run prisma:seed
 Pop-Location
 
-Write-Host "`n=== 5/5: Launching dev servers in new windows ===" -ForegroundColor Cyan
+Write-Host "`n=== 5/6: Seeding treatment + package catalog ===" -ForegroundColor Cyan
+Push-Location $RepoRoot
+npm run prisma:seed:catalog
+Pop-Location
+
+Write-Host "`n=== 6/6: Launching dev servers in new windows ===" -ForegroundColor Cyan
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot'; npm run dev"
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot\frontend'; npm run dev"
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot\website'; npm run dev"

@@ -11,5 +11,5 @@ body {
 }
 
 ::selection {
-  @apply bg-blush-200;
+  @apply bg-brand-200;
 }

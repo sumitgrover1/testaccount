@@ -28,7 +28,7 @@ const testimonials = [
 export default function TestimonialsPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-20">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-blush-600">Testimonials</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">Testimonials</p>
       <h1 className="mt-4 font-serif text-4xl text-charcoal-900">What Our Patients Say</h1>
       <p className="mt-4 max-w-2xl text-charcoal-700">
         These are placeholders — swap them for real reviews once you have a few, ideally with the
@@ -36,9 +36,9 @@ export default function TestimonialsPage() {
       </p>
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {testimonials.map((t, i) => (
-          <div key={i} className="rounded-2xl border border-blush-100 bg-cream-50 p-8">
+          <div key={i} className="rounded-2xl border border-brand-100 bg-cream-50 p-8">
             <p className="text-sm italic text-charcoal-700">&ldquo;{t.quote}&rdquo;</p>
-            <p className="mt-4 text-sm font-semibold text-blush-700">— {t.name}</p>
+            <p className="mt-4 text-sm font-semibold text-brand-700">— {t.name}</p>
           </div>
         ))}
       </div>
@@ -48,7 +48,7 @@ export default function TestimonialsPage() {
           href={siteConfig.instagramUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="font-medium text-blush-600 hover:text-blush-700"
+          className="font-medium text-brand-600 hover:text-brand-700"
         >
           Instagram
         </a>
@@ -60,7 +60,7 @@ export default function TestimonialsPage() {
         <p className="mt-2 text-sm text-charcoal-700">Book a consultation with our team today.</p>
         <Link
           href="/contact"
-          className="mt-6 inline-block rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white hover:bg-blush-700"
+          className="mt-6 inline-block rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white hover:bg-brand-700"
         >
           Book a Consultation
         </Link>

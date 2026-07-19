@@ -50,8 +50,8 @@ export function EnquiryForm() {
 
   if (status === 'success') {
     return (
-      <div className="rounded-2xl bg-blush-50 p-8 text-center">
-        <p className="font-serif text-xl text-blush-700">Thank you!</p>
+      <div className="rounded-2xl bg-brand-50 p-8 text-center">
+        <p className="font-serif text-xl text-brand-700">Thank you!</p>
         <p className="mt-2 text-sm text-charcoal-700">{feedback}</p>
       </div>
     );
@@ -69,7 +69,7 @@ export function EnquiryForm() {
           required
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-blush-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-blush-400 focus:outline-none focus:ring-2 focus:ring-blush-200"
+          className="mt-1 w-full rounded-lg border border-brand-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
           placeholder="Your name"
         />
       </div>
@@ -83,7 +83,7 @@ export function EnquiryForm() {
           required
           value={mobileNumber}
           onChange={(e) => setMobileNumber(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-blush-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-blush-400 focus:outline-none focus:ring-2 focus:ring-blush-200"
+          className="mt-1 w-full rounded-lg border border-brand-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
           placeholder="+91 98765 43210"
         />
       </div>
@@ -96,7 +96,7 @@ export function EnquiryForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-blush-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-blush-400 focus:outline-none focus:ring-2 focus:ring-blush-200"
+          className="mt-1 w-full rounded-lg border border-brand-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
           placeholder="you@example.com"
         />
       </div>
@@ -109,7 +109,7 @@ export function EnquiryForm() {
           rows={4}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-blush-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-blush-400 focus:outline-none focus:ring-2 focus:ring-blush-200"
+          className="mt-1 w-full rounded-lg border border-brand-200 bg-cream-50 px-4 py-2.5 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
           placeholder="e.g. Skin consultation, hair treatment..."
         />
       </div>
@@ -119,7 +119,7 @@ export function EnquiryForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="w-full rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white transition hover:bg-blush-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === 'submitting' ? 'Sending…' : 'Request a Callback'}
       </button>

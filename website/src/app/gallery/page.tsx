@@ -15,7 +15,7 @@ const placeholders = Array.from({ length: 6 }, (_, i) => `Result ${i + 1}`);
 export default function GalleryPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-20">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-blush-600">Gallery</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">Gallery</p>
       <h1 className="mt-4 font-serif text-4xl text-charcoal-900">Real Results</h1>
       <p className="mt-4 max-w-2xl text-charcoal-700">
         Photos coming soon. Follow{' '}
@@ -23,7 +23,7 @@ export default function GalleryPage() {
           href={siteConfig.instagramUrl}
           target="_blank"
           rel="noreferrer noopener"
-          className="font-medium text-blush-600 hover:text-blush-700"
+          className="font-medium text-brand-600 hover:text-brand-700"
         >
           {siteConfig.instagramHandle}
         </a>{' '}
@@ -45,7 +45,7 @@ export default function GalleryPage() {
         <p className="mt-2 text-sm text-charcoal-700">Book a consultation to discuss your own treatment plan.</p>
         <Link
           href="/contact"
-          className="mt-6 inline-block rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white hover:bg-blush-700"
+          className="mt-6 inline-block rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white hover:bg-brand-700"
         >
           Book a Consultation
         </Link>

@@ -46,15 +46,15 @@ export default function FaqPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-20">
       <JsonLd data={faqPageSchema(faqs)} />
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-blush-600">FAQ</p>
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">FAQ</p>
       <h1 className="mt-4 font-serif text-4xl text-charcoal-900">Frequently Asked Questions</h1>
 
-      <div className="mt-12 divide-y divide-blush-100">
+      <div className="mt-12 divide-y divide-brand-100">
         {faqs.map((faq) => (
           <details key={faq.question} className="group py-5">
             <summary className="flex cursor-pointer list-none items-center justify-between font-serif text-lg text-charcoal-900">
               {faq.question}
-              <span className="ml-4 shrink-0 text-blush-600 transition group-open:rotate-45">+</span>
+              <span className="ml-4 shrink-0 text-brand-600 transition group-open:rotate-45">+</span>
             </summary>
             <p className="mt-3 text-sm text-charcoal-700">{faq.answer}</p>
           </details>
@@ -66,7 +66,7 @@ export default function FaqPage() {
         <p className="mt-2 text-sm text-charcoal-700">Our team is happy to answer anything before you book.</p>
         <Link
           href="/contact"
-          className="mt-6 inline-block rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white hover:bg-blush-700"
+          className="mt-6 inline-block rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white hover:bg-brand-700"
         >
           Ask Us / Book a Consultation
         </Link>

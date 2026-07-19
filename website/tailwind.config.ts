@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 
-// Warm, elegant aesthetic-clinic palette — blush/rose accent on a cream base,
-// deep charcoal for text. Swap these values to re-theme the whole site.
+// Brand palette matched to the Lumine Aesthetics logo (deep indigo/purple)
+// on a cream base, deep charcoal for text. Swap these values to re-theme.
 const config: Config = {
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
@@ -12,17 +12,17 @@ const config: Config = {
           100: '#faf5ec',
           200: '#f3e9d7',
         },
-        blush: {
-          50: '#fdf2f4',
-          100: '#fbe4e8',
-          200: '#f5c6cf',
-          300: '#eda2b1',
-          400: '#df7a8e',
-          500: '#c85c73',
-          600: '#a8435a',
-          700: '#87344a',
-          800: '#6b2a3c',
-          900: '#4a1d2a',
+        brand: {
+          50: '#f5f3fc',
+          100: '#ebe7f8',
+          200: '#d3cbf0',
+          300: '#b3a3e3',
+          400: '#9078d2',
+          500: '#6f55be',
+          600: '#5a3fa8',
+          700: '#4b3494',
+          800: '#3a2773',
+          900: '#281b52',
         },
         charcoal: {
           700: '#3a3532',
