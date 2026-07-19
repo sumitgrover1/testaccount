@@ -153,6 +153,14 @@ Builds a multi-stage, non-root production image and starts it alongside MySQL
 and Redis. Set `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, and `COOKIE_SECRET`
 in your shell or an `.env` file read by `docker compose` before starting.
 
+### Deploying without Docker (shared/cPanel hosting)
+
+If your host doesn't support Docker — e.g. cPanel-based shared hosting
+plans like MilesWeb — see **[DEPLOYMENT.md](./DEPLOYMENT.md)** for a
+step-by-step guide using cPanel's Node.js Selector, including how to build
+the two Next.js apps in standalone mode so they run without a full
+`npm install` on the server.
+
 ## Domain model
 
 - **Users** are clinic staff (`SUPER_ADMIN`, `CLINIC_OWNER`, `DOCTOR`,
