@@ -166,6 +166,13 @@ enum FollowUpStatus {
   CANCELLED
 }
 
+enum BlogCategory {
+  SKIN
+  HAIR
+  WEIGHT_MANAGEMENT
+  GENERAL
+}
+
 // ---------------------------------------------------------------------------
 // Identity & access
 // ---------------------------------------------------------------------------
@@ -206,6 +213,7 @@ model User {
   payments              Payment[]
   purchaseInvoices      PurchaseInvoice[]
   stockMovements        StockMovement[]
+  blogPosts             BlogPost[]
 
   @@index([role])
   @@map("users")
@@ -915,6 +923,34 @@ model CommunicationLog {
   @@index([leadId])
   @@index([patientId])
   @@map("communication_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Content / marketing
+// ---------------------------------------------------------------------------
+
+/// Educational blog content for the public website. `content` is stored as an
+/// array of paragraph strings (matching how the website renders an article)
+/// rather than a single markdown blob, keeping both the API response and the
+/// admin panel's editor simple — no markdown parser needed on either side.
+model BlogPost {
+  id               String        @id @default(uuid())
+  slug             String        @unique
+  title            String
+  category         BlogCategory
+  excerpt          String        @db.Text
+  content          Json
+  readTimeMinutes  Int           @default(4)
+  isPublished      Boolean       @default(false)
+  publishedAt      DateTime?
+  createdById      String
+  createdBy        User          @relation(fields: [createdById], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([category])
+  @@index([isPublished])
+  @@map("blog_posts")
 }
 
 // ---------------------------------------------------------------------------

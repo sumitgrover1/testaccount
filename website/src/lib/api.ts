@@ -92,6 +92,49 @@ export async function fetchInstagramGallery(): Promise<InstagramGalleryResult> {
   }
 }
 
+export interface BlogPostSummary {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  readTimeMinutes: number;
+  publishedAt: string;
+}
+
+export interface BlogPostDetail extends BlogPostSummary {
+  content: string[];
+}
+
+// Server-side fetch for the Blog list page — published articles, managed
+// from the admin panel's Blog section.
+export async function fetchBlogPosts(): Promise<BlogPostSummary[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/blog/public-list`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data: BlogPostSummary[] };
+    return body.data;
+  } catch {
+    return [];
+  }
+}
+
+// Server-side fetch for an individual Blog article page.
+export async function fetchBlogPostBySlug(slug: string): Promise<BlogPostDetail | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/blog/public/${slug}`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data: BlogPostDetail };
+    return body.data;
+  } catch {
+    return null;
+  }
+}
+
 export interface EnquiryInput {
   fullName: string;
   mobileNumber: string;

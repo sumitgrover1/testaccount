@@ -16,6 +16,7 @@ import communicationRoutes from '../modules/communications/communication.routes'
 import dashboardRoutes from '../modules/dashboard/dashboard.routes';
 import reviewsRoutes from '../modules/reviews/reviews.routes';
 import galleryRoutes from '../modules/gallery/gallery.routes';
+import blogRoutes from '../modules/blog/blog.routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/communications', communicationRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reviews', reviewsRoutes);
 router.use('/gallery', galleryRoutes);
+router.use('/blog', blogRoutes);
 
 export default router;

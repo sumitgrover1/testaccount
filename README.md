@@ -120,6 +120,16 @@ npm run prisma:seed:catalog
 
 Safe to re-run — skips any treatment/package whose name already exists.
 
+Optionally, seed 42 starter blog articles (Skin/Hair/Weight Management) for
+the website's Blog section, published and attributed to the first Super
+Admin found:
+
+```bash
+npm run prisma:seed:blog
+```
+
+Safe to re-run — skips any post whose slug already exists.
+
 ### Scripts
 
 | Command | Purpose |
@@ -210,6 +220,12 @@ marketing website (`website/`) — everything else requires a staff login:
   to be the *initial* token, not kept current forever — though it must
   still be manually replaced if the server has been down long enough for
   the cached refresh to lapse past 60 days.
+- `GET /api/v1/blog/public-list` and `GET /api/v1/blog/public/:slug` — the
+  website's Blog section, backed by the `BlogPost` table rather than static
+  files. Authenticated CRUD (`POST/GET/PATCH/DELETE /api/v1/blog[/:id]`,
+  restricted to `SUPER_ADMIN`/`CLINIC_OWNER`/`MARKETING_TEAM`) is managed
+  from the admin panel's Blog page — draft articles never appear on either
+  public endpoint until published.
 
 ## Integration points not wired to a live provider
 

@@ -344,6 +344,22 @@ export interface PricingApprovalRequest {
   createdAt: string;
 }
 
+export type BlogCategory = 'SKIN' | 'HAIR' | 'WEIGHT_MANAGEMENT' | 'GENERAL';
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  category: BlogCategory;
+  excerpt: string;
+  content: string[];
+  readTimeMinutes: number;
+  isPublished: boolean;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TimelineEntry {
   type: 'COMMUNICATION' | 'APPOINTMENT' | 'INVOICE' | 'TREATMENT_SESSION' | 'LEAD_STATUS' | 'FOLLOW_UP';
   occurredAt: string;

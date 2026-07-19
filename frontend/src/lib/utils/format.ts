@@ -81,6 +81,7 @@ const STATUS_COLORS: Record<string, string> = {
   INVALID: 'bg-rose-100 text-rose-700',
   NO_RESPONSE: 'bg-slate-200 text-slate-600',
   DRAFT: 'bg-slate-200 text-slate-600',
+  PUBLISHED: 'bg-emerald-100 text-emerald-700',
   ISSUED: 'bg-blue-100 text-blue-700',
   PARTIALLY_PAID: 'bg-amber-100 text-amber-700',
   PAID: 'bg-emerald-100 text-emerald-700',

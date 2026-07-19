@@ -1,30 +1,35 @@
-// Educational blog content for the website — general skin, hair, and
-// weight-management information written from the clinic's perspective.
-// This is informational content, not medical advice for any specific
-// individual; every article ends with a reminder to consult a doctor
-// before starting a treatment. Content here is original writing, not
-// sourced from or attributed to any external publication.
-export interface BlogPost {
+// Seeds the 42 educational blog articles (Skin/Hair/Weight Management/
+// General) into the database. Requires a Super Admin account to already
+// exist (run `npm run prisma:seed` first) — posts are attributed to that
+// admin as their author.
+//
+// Usage: npm run prisma:seed:blog
+// Safe to re-run — skips any post whose slug already exists.
+import { BlogCategory, PrismaClient, Role } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+interface SeedPost {
   slug: string;
   title: string;
-  category: 'Skin' | 'Hair' | 'Weight Management' | 'General';
+  category: BlogCategory;
   excerpt: string;
   readTimeMinutes: number;
-  publishedAt: string; // ISO date
-  content: string[]; // paragraphs
+  publishedAt: string;
+  content: string[];
 }
 
 const DISCLAIMER =
   'This article is for general educational purposes and isn’t a substitute for a professional consultation. Everyone’s skin, hair, and body respond differently — book a consultation with our doctors before starting any treatment.';
 
-export const blogPosts: BlogPost[] = [
+const seedPosts: SeedPost[] = [
   // ---------------------------------------------------------------------
   // Skin
   // ---------------------------------------------------------------------
   {
     slug: 'understanding-your-skin-type',
     title: 'Understanding Your Skin Type: Oily, Dry, Combination, and Sensitive',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Most skincare mistakes start with using the wrong products for your actual skin type. Here’s how to identify yours.',
     readTimeMinutes: 4,
     publishedAt: '2026-01-12',
@@ -39,7 +44,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'science-behind-acne',
     title: 'The Science Behind Acne: Causes and Common Triggers',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Acne isn’t just a teenage problem — understanding what actually causes breakouts helps you treat them more effectively.',
     readTimeMinutes: 5,
     publishedAt: '2026-01-15',
@@ -54,7 +59,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'why-sun-protection-matters',
     title: 'Why Sun Protection Matters Every Single Day',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Sunscreen isn’t just for sunny beach days — here’s why dermatologists recommend it as a daily, year-round habit.',
     readTimeMinutes: 4,
     publishedAt: '2026-01-18',
@@ -69,7 +74,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'hyperpigmentation-101',
     title: 'Hyperpigmentation 101: Causes and Prevention Tips',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Dark spots and uneven tone are among the most common skin concerns — here’s what actually causes them.',
     readTimeMinutes: 5,
     publishedAt: '2026-01-22',
@@ -84,7 +89,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'role-of-hydration-in-healthy-skin',
     title: 'The Role of Hydration in Healthy Skin',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Hydrated skin looks plumper, more even, and ages more gracefully — but hydration means more than just drinking water.',
     readTimeMinutes: 4,
     publishedAt: '2026-01-26',
@@ -99,7 +104,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'chemical-peels-explained',
     title: 'Chemical Peels Explained: What to Expect',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Chemical peels are one of the most common in-clinic skin treatments — here’s what they actually do.',
     readTimeMinutes: 5,
     publishedAt: '2026-01-29',
@@ -114,7 +119,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'hydrafacial-vs-regular-facial',
     title: 'HydraFacial vs Regular Facial: What’s the Difference',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Both aim to refresh your skin, but the technology and results differ meaningfully.',
     readTimeMinutes: 4,
     publishedAt: '2026-02-02',
@@ -129,7 +134,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'anti-aging-skincare-in-your-30s',
     title: 'Anti-Aging Skincare: Where to Start in Your 30s',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Your 30s are a good time to shift from reactive skincare to a more preventive, structured routine.',
     readTimeMinutes: 5,
     publishedAt: '2026-02-05',
@@ -144,7 +149,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'building-a-simple-daily-skincare-routine',
     title: 'How to Build a Simple Daily Skincare Routine',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'You don’t need ten products — a consistent, simple routine usually beats a complicated one.',
     readTimeMinutes: 4,
     publishedAt: '2026-02-09',
@@ -159,7 +164,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'understanding-skin-barrier-damage',
     title: 'Understanding Skin Barrier Damage and How to Repair It',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'A damaged skin barrier is behind more skin concerns than people realize — here’s how to spot and fix it.',
     readTimeMinutes: 5,
     publishedAt: '2026-02-12',
@@ -174,7 +179,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'dark-circles-causes-and-care',
     title: 'Dark Circles: Common Causes and Care Tips',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Dark circles have several different underlying causes, which is why the right treatment varies from person to person.',
     readTimeMinutes: 4,
     publishedAt: '2026-02-16',
@@ -189,7 +194,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'post-acne-scarring-treatment-options',
     title: 'Post-Acne Scarring: Treatment Options to Know',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Acne scars and acne marks are often confused — understanding the difference helps set the right expectations.',
     readTimeMinutes: 5,
     publishedAt: '2026-02-19',
@@ -204,7 +209,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'winter-skincare-protecting-from-dryness',
     title: 'Winter Skincare: Protecting Your Skin from Dryness',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Cold, dry air can be tough on skin — small routine adjustments make a big difference through winter.',
     readTimeMinutes: 4,
     publishedAt: '2026-02-23',
@@ -219,7 +224,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'summer-skincare-managing-oil-and-sun',
     title: 'Summer Skincare: Managing Oil, Sweat, and Sun Exposure',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Heat and humidity change how your skin behaves — here’s how to adjust your routine.',
     readTimeMinutes: 4,
     publishedAt: '2026-02-26',
@@ -234,7 +239,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'botox-for-beginners',
     title: 'Botox for Beginners: Common Questions Answered',
-    category: 'Skin',
+    category: BlogCategory.SKIN,
     excerpt: 'Considering Botox for the first time? Here are answers to the most common questions.',
     readTimeMinutes: 5,
     publishedAt: '2026-03-02',
@@ -253,7 +258,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'understanding-hair-fall-common-causes',
     title: 'Understanding Hair Fall: Common Causes',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Losing some hair every day is normal — here’s how to tell when it’s become a real concern, and why.',
     readTimeMinutes: 5,
     publishedAt: '2026-03-05',
@@ -268,7 +273,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'prp-for-hair-how-it-works',
     title: 'PRP for Hair: How It Works',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'PRP therapy uses your own blood components to help stimulate hair growth — here’s the science in plain terms.',
     readTimeMinutes: 5,
     publishedAt: '2026-03-09',
@@ -283,7 +288,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'gfc-therapy-explained',
     title: 'GFC Therapy Explained for Hair Regrowth',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'GFC is a newer alternative to PRP for hair regrowth — here’s how the two compare.',
     readTimeMinutes: 4,
     publishedAt: '2026-03-12',
@@ -298,7 +303,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'dandruff-vs-dry-scalp',
     title: 'Dandruff vs Dry Scalp: Knowing the Difference',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'These two conditions look similar but have different causes — and different solutions.',
     readTimeMinutes: 4,
     publishedAt: '2026-03-16',
@@ -313,7 +318,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'nutrition-and-hair-health',
     title: 'Nutrition and Hair Health: What to Eat for Stronger Hair',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Hair is largely built from protein — what you eat has a real, measurable impact on how it grows.',
     readTimeMinutes: 5,
     publishedAt: '2026-03-19',
@@ -328,7 +333,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'seasonal-hair-fall-is-it-normal',
     title: 'Seasonal Hair Fall: Is It Normal?',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Many people notice more hair fall during certain seasons — here’s why that happens.',
     readTimeMinutes: 4,
     publishedAt: '2026-03-23',
@@ -343,7 +348,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'hair-fall-after-pregnancy',
     title: 'Hair Fall After Pregnancy: What to Expect',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Postpartum hair shedding is extremely common and usually temporary — here’s what’s happening and when to seek help.',
     readTimeMinutes: 4,
     publishedAt: '2026-03-26',
@@ -358,7 +363,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'understanding-male-pattern-baldness',
     title: 'Understanding Male Pattern Baldness',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'The most common cause of hair loss in men follows a predictable pattern — here’s what drives it.',
     readTimeMinutes: 5,
     publishedAt: '2026-03-30',
@@ -373,7 +378,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'understanding-female-pattern-hair-loss',
     title: 'Understanding Female Pattern Hair Loss',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Hair thinning in women often looks different from male pattern baldness — and needs a different approach.',
     readTimeMinutes: 5,
     publishedAt: '2026-04-02',
@@ -388,7 +393,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'hair-spa-benefits',
     title: 'Hair Spa Benefits: More Than Just Relaxation',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'A hair spa session does more than feel good — here’s what it actually does for your hair and scalp.',
     readTimeMinutes: 3,
     publishedAt: '2026-04-06',
@@ -403,7 +408,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'keratin-vs-hair-botox',
     title: 'Keratin Treatment vs Hair Botox: Which is Right for You',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Both treatments smooth and reduce frizz, but they work differently and suit different hair concerns.',
     readTimeMinutes: 4,
     publishedAt: '2026-04-09',
@@ -418,7 +423,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'scalp-health-foundation-of-hair',
     title: 'Scalp Health: The Foundation of Healthy Hair',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Hair care conversations often focus on the hair itself, but scalp health is just as important.',
     readTimeMinutes: 4,
     publishedAt: '2026-04-13',
@@ -433,7 +438,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'stress-and-hair-loss',
     title: 'Stress and Hair Loss: Is There a Connection?',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Yes — significant stress can genuinely trigger hair shedding. Here’s how that connection works.',
     readTimeMinutes: 4,
     publishedAt: '2026-04-17',
@@ -448,7 +453,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'how-often-should-you-wash-your-hair',
     title: 'How Often Should You Wash Your Hair?',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'There’s no single right answer — it depends on your scalp type, hair type, and lifestyle.',
     readTimeMinutes: 3,
     publishedAt: '2026-04-21',
@@ -463,7 +468,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'signs-you-should-see-a-dermatologist-for-hair-loss',
     title: 'Signs You Should See a Dermatologist for Hair Loss',
-    category: 'Hair',
+    category: BlogCategory.HAIR,
     excerpt: 'Some hair loss patterns are worth getting checked sooner rather than later — here’s when.',
     readTimeMinutes: 4,
     publishedAt: '2026-04-24',
@@ -482,7 +487,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'understanding-body-contouring',
     title: 'Understanding Body Contouring: What It Can and Cannot Do',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Body contouring is often misunderstood as a weight-loss treatment — here’s what it’s actually designed for.',
     readTimeMinutes: 5,
     publishedAt: '2026-04-28',
@@ -497,7 +502,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'non-surgical-fat-reduction-how-it-works',
     title: 'Non-Surgical Fat Reduction: How It Works',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Non-invasive fat reduction technology has come a long way — here’s the general science behind it.',
     readTimeMinutes: 5,
     publishedAt: '2026-05-02',
@@ -512,7 +517,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'role-of-diet-in-weight-management-plan',
     title: 'The Role of Diet in a Weight Management Plan',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'No aesthetic treatment can outperform a poor diet — here’s why nutrition remains the foundation.',
     readTimeMinutes: 5,
     publishedAt: '2026-05-06',
@@ -527,7 +532,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'common-myths-about-spot-reduction',
     title: 'Common Myths About Spot Reduction',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Can you really "target" fat loss in one specific area through exercise alone? Here’s what’s actually true.',
     readTimeMinutes: 4,
     publishedAt: '2026-05-10',
@@ -542,7 +547,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'inch-loss-vs-weight-loss',
     title: 'Inch Loss vs Weight Loss: Understanding the Difference',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'The number on the scale and your measurements don’t always move together — here’s why that matters.',
     readTimeMinutes: 4,
     publishedAt: '2026-05-14',
@@ -557,7 +562,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'building-sustainable-habits-for-weight-management',
     title: 'Building Sustainable Habits for Long-Term Weight Management',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Short-term extreme changes rarely last — here’s what actually helps weight management stick.',
     readTimeMinutes: 5,
     publishedAt: '2026-05-18',
@@ -572,7 +577,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'importance-of-personalized-weight-management-plan',
     title: 'The Importance of a Personalized Weight Management Plan',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Generic weight-loss advice ignores the fact that everyone’s body, lifestyle, and goals are different.',
     readTimeMinutes: 4,
     publishedAt: '2026-05-22',
@@ -587,7 +592,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'metabolism-101-what-affects-it',
     title: 'Metabolism 101: What Affects It',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Metabolism is often blamed or credited for weight changes — here’s what actually influences it.',
     readTimeMinutes: 5,
     publishedAt: '2026-05-26',
@@ -602,7 +607,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'post-treatment-care-for-body-contouring',
     title: 'Post-Treatment Care for Body Contouring',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'What you do after a body contouring session affects how well your results hold up.',
     readTimeMinutes: 4,
     publishedAt: '2026-05-30',
@@ -617,7 +622,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'when-to-consult-a-doctor-about-weight-management',
     title: 'When to Consult a Doctor About Weight Management',
-    category: 'Weight Management',
+    category: BlogCategory.WEIGHT_MANAGEMENT,
     excerpt: 'Not all weight changes are simply about diet and exercise — here’s when it’s worth getting a professional opinion.',
     readTimeMinutes: 4,
     publishedAt: '2026-06-03',
@@ -636,7 +641,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'combining-skin-and-hair-treatments',
     title: 'Combining Skin and Hair Treatments: What to Know',
-    category: 'General',
+    category: BlogCategory.GENERAL,
     excerpt: 'Thinking about addressing both skin and hair concerns together? Here’s what to consider.',
     readTimeMinutes: 4,
     publishedAt: '2026-06-07',
@@ -651,7 +656,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'choosing-the-right-clinic-for-aesthetic-treatments',
     title: 'Choosing the Right Clinic for Aesthetic Treatments',
-    category: 'General',
+    category: BlogCategory.GENERAL,
     excerpt: 'Not all clinics are the same — here’s what’s worth checking before booking any aesthetic treatment.',
     readTimeMinutes: 5,
     publishedAt: '2026-06-11',
@@ -665,10 +670,46 @@ export const blogPosts: BlogPost[] = [
   },
 ];
 
-export function getBlogPostBySlug(slug: string): BlogPost | undefined {
-  return blogPosts.find((post) => post.slug === slug);
+async function main() {
+  const actingUser = await prisma.user.findFirst({
+    where: { role: Role.SUPER_ADMIN },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (!actingUser) {
+    console.error('No SUPER_ADMIN user found — run `npm run prisma:seed` first to create the admin account.');
+    process.exit(1);
+  }
+  console.log(`Seeding blog as ${actingUser.email}...\n`);
+
+  for (const post of seedPosts) {
+    const existing = await prisma.blogPost.findUnique({ where: { slug: post.slug } });
+    if (existing) {
+      console.log(`  - Post "${post.slug}" already exists, skipping`);
+      continue;
+    }
+
+    await prisma.blogPost.create({
+      data: {
+        slug: post.slug,
+        title: post.title,
+        category: post.category,
+        excerpt: post.excerpt,
+        content: post.content,
+        readTimeMinutes: post.readTimeMinutes,
+        isPublished: true,
+        publishedAt: new Date(post.publishedAt),
+        createdById: actingUser.id,
+      },
+    });
+    console.log(`  + Created post: ${post.title}`);
+  }
+
+  console.log('\nBlog seeding complete.');
 }
 
-export function getRelatedPosts(post: BlogPost, limit = 3): BlogPost[] {
-  return blogPosts.filter((p) => p.category === post.category && p.slug !== post.slug).slice(0, limit);
-}
+main()
+  .catch((err) => {
+    console.error('Blog seed failed:', err);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

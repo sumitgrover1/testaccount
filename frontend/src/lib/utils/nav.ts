@@ -13,6 +13,7 @@ import {
   ListTodo,
   MessagesSquare,
   ShieldCheck,
+  Newspaper,
   type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@/types';
@@ -74,6 +75,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Marketing',
     href: '/marketing',
     icon: Megaphone,
+    roles: ['SUPER_ADMIN', 'CLINIC_OWNER', 'MARKETING_TEAM'],
+  },
+  {
+    label: 'Blog',
+    href: '/blog',
+    icon: Newspaper,
     roles: ['SUPER_ADMIN', 'CLINIC_OWNER', 'MARKETING_TEAM'],
   },
   {

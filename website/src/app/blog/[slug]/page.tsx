@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { blogPosts, getBlogPostBySlug, getRelatedPosts } from '@/content/blogPosts';
+import { fetchBlogPostBySlug, fetchBlogPosts } from '@/lib/api';
 import { siteConfig } from '@/config/site';
-import { CategoryIconBadge } from '@/lib/categoryIcon';
+import { CategoryIconBadge, formatCategoryLabel } from '@/lib/categoryIcon';
 import { JsonLd } from '@/components/JsonLd';
-
-export function generateStaticParams() {
-  return blogPosts.map((post) => ({ slug: post.slug }));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const post = await fetchBlogPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
@@ -22,8 +18,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function articleSchema(post: NonNullable<ReturnType<typeof getBlogPostBySlug>>) {
-  return {
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await fetchBlogPostBySlug(slug);
+  if (!post) notFound();
+
+  const allPosts = await fetchBlogPosts();
+  const related = allPosts.filter((p) => p.category === post.category && p.slug !== post.slug).slice(0, 3);
+
+  const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
@@ -32,18 +35,10 @@ function articleSchema(post: NonNullable<ReturnType<typeof getBlogPostBySlug>>) 
     author: { '@type': 'Organization', name: siteConfig.name },
     publisher: { '@type': 'Organization', name: siteConfig.name },
   };
-}
-
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
-  if (!post) notFound();
-
-  const related = getRelatedPosts(post);
 
   return (
     <article className="mx-auto max-w-2xl px-6 py-20">
-      <JsonLd data={articleSchema(post)} />
+      <JsonLd data={articleSchema} />
 
       <Link href="/blog" className="text-sm font-medium text-brand-600 hover:text-brand-700">
         ← Back to Blog
@@ -53,7 +48,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
           <CategoryIconBadge category={post.category} />
         </span>
-        <span className="text-xs font-medium uppercase tracking-wide text-brand-600">{post.category}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
+          {formatCategoryLabel(post.category)}
+        </span>
       </div>
 
       <h1 className="mt-4 font-serif text-3xl leading-tight text-charcoal-900 md:text-4xl">{post.title}</h1>
