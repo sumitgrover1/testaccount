@@ -25,6 +25,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:catalog": "tsx prisma/seed-catalog.ts",
+    "prisma:seed:blog": "tsx prisma/seed-blog.ts",
     "audit": "npm audit --audit-level=moderate",
     "prepare": "husky"
   },

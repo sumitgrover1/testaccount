@@ -15,3 +15,13 @@ export function CategoryIconBadge({ category, className = 'h-4 w-4' }: { categor
   if (/men/i.test(category)) return <UserRound className={className} aria-hidden />;
   return <Sparkles className={className} aria-hidden />;
 }
+
+// Blog categories come from the backend as enum values (e.g.
+// "WEIGHT_MANAGEMENT") — format them for display (e.g. "Weight Management").
+export function formatCategoryLabel(category: string): string {
+  return category
+    .toLowerCase()
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
