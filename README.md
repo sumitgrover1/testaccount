@@ -220,11 +220,17 @@ marketing website (`website/`) — everything else requires a staff login:
   to be the *initial* token, not kept current forever — though it must
   still be manually replaced if the server has been down long enough for
   the cached refresh to lapse past 60 days.
-- `GET /api/v1/blog/public-list` and `GET /api/v1/blog/public/:slug` — the
-  website's Blog section, backed by the `BlogPost` table rather than static
-  files. Authenticated CRUD (`POST/GET/PATCH/DELETE /api/v1/blog[/:id]`,
-  restricted to `SUPER_ADMIN`/`CLINIC_OWNER`/`MARKETING_TEAM`) is managed
-  from the admin panel's Blog page — draft articles never appear on either
+- `GET /api/v1/blog/public-list`, `GET /api/v1/blog/public-tags`, and
+  `GET /api/v1/blog/public/:slug` — the website's Blog section, backed by the
+  `BlogPost`/`BlogTag` tables rather than static files. `public-list` is
+  paged (`page`/`limit`, 10/page by default, capped at 100) and filterable
+  by `category` and/or `tag`, matching the website's category/tag
+  "subsection" browsing and pagination; `public-tags` lists only tags with
+  at least one published post, for that subsection nav. Authenticated CRUD
+  (`POST/GET/PATCH/DELETE /api/v1/blog[/:id]`, restricted to
+  `SUPER_ADMIN`/`CLINIC_OWNER`/`MARKETING_TEAM`) is managed from the admin
+  panel's Blog page, including free-form tags (find-or-created by name) in
+  addition to the fixed `category` — draft articles never appear on either
   public endpoint until published.
 
 ## Integration points not wired to a live provider

@@ -6,6 +6,7 @@ import type {
   CreateBlogPostInput,
   IdParam,
   ListBlogPostsQuery,
+  PublicListBlogPostsQuery,
   SlugParam,
   UpdateBlogPostInput,
 } from './blog.validation';
@@ -16,9 +17,15 @@ export const createBlogPost = asyncHandler(async (req: Request, res: Response) =
   res.status(201).json({ data: post });
 });
 
-export const listPublicBlogPosts = asyncHandler(async (_req: Request, res: Response) => {
-  const posts = await blogService.listPublicBlogPosts();
-  res.status(200).json({ data: posts });
+export const listPublicBlogPosts = asyncHandler(async (req: Request, res: Response) => {
+  const query = req.query as unknown as PublicListBlogPostsQuery;
+  const result = await blogService.listPublicBlogPosts(query);
+  res.status(200).json({ data: result.items, pagination: result.pagination });
+});
+
+export const listPublicBlogTags = asyncHandler(async (_req: Request, res: Response) => {
+  const tags = await blogService.listPublicBlogTags();
+  res.status(200).json({ data: tags });
 });
 
 export const getPublicBlogPostBySlug = asyncHandler(async (req: Request, res: Response) => {

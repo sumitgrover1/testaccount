@@ -945,12 +945,25 @@ model BlogPost {
   publishedAt      DateTime?
   createdById      String
   createdBy        User          @relation(fields: [createdById], references: [id])
+  tags             BlogTag[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
   @@index([category])
   @@index([isPublished])
   @@map("blog_posts")
+}
+
+/// Free-form tags editors can attach to a BlogPost, in addition to its fixed
+/// category — lets the website offer a finer-grained "browse by topic"
+/// subsection than the four broad categories alone.
+model BlogTag {
+  id    String     @id @default(uuid())
+  name  String
+  slug  String     @unique
+  posts BlogPost[]
+
+  @@map("blog_tags")
 }
 
 // ---------------------------------------------------------------------------

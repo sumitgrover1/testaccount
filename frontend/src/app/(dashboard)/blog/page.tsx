@@ -36,6 +36,7 @@ const schema = z.object({
   content: z.string().min(1, 'Required'),
   readTimeMinutes: z.coerce.number().int().positive().default(4),
   isPublished: z.boolean().default(false),
+  tags: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -43,6 +44,14 @@ function contentToParagraphs(content: string): string[] {
   return content
     .split(/\n\s*\n/)
     .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+function tagsToList(tags: string | undefined): string[] {
+  if (!tags) return [];
+  return tags
+    .split(',')
+    .map((t) => t.trim())
     .filter(Boolean);
 }
 
@@ -73,13 +82,14 @@ function BlogPostFormModal({
           content: post.content.join('\n\n'),
           readTimeMinutes: post.readTimeMinutes,
           isPublished: post.isPublished,
+          tags: post.tags.map((t) => t.name).join(', '),
         }
       : undefined,
   });
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
-      const input = { ...values, content: contentToParagraphs(values.content) };
+      const input = { ...values, content: contentToParagraphs(values.content), tags: tagsToList(values.tags) };
       return post ? blogApi.updateBlogPost(post.id, input) : blogApi.createBlogPost(input);
     },
     onSuccess: () => {
@@ -117,6 +127,7 @@ function BlogPostFormModal({
           error={errors.content?.message}
           {...register('content')}
         />
+        <Input label="Tags (comma-separated, optional)" error={errors.tags?.message} {...register('tags')} />
         <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
           <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('isPublished')} />
           Published
@@ -183,6 +194,7 @@ export default function BlogPage() {
           columns={[
             { header: 'Title', accessor: (r) => r.title },
             { header: 'Category', accessor: (r) => titleCase(r.category) },
+            { header: 'Tags', accessor: (r) => (r.tags.length > 0 ? r.tags.map((t) => t.name).join(', ') : '—') },
             { header: 'Read time', accessor: (r) => `${r.readTimeMinutes} min` },
             { header: 'Status', accessor: (r) => <Badge status={r.isPublished ? 'PUBLISHED' : 'DRAFT'} /> },
             {

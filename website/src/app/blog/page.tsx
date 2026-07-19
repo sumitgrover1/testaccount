@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { fetchBlogPosts } from '@/lib/api';
+import { fetchBlogPosts, fetchBlogTags } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 import { CategoryIconBadge, formatCategoryLabel } from '@/lib/categoryIcon';
 
@@ -10,8 +10,42 @@ export const metadata: Metadata = {
   alternates: { canonical: '/blog' },
 };
 
-export default async function BlogPage() {
-  const posts = await fetchBlogPosts();
+const CATEGORIES = ['SKIN', 'HAIR', 'WEIGHT_MANAGEMENT', 'GENERAL'];
+const PAGE_SIZE = 10;
+
+function buildQuery(params: Record<string, string | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value);
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : '';
+}
+
+function pillClasses(active: boolean): string {
+  return `rounded-full px-4 py-1.5 text-sm font-medium transition ${
+    active ? 'bg-brand-600 text-white' : 'bg-cream-100 text-charcoal-700 hover:bg-cream-200'
+  }`;
+}
+
+function tagPillClasses(active: boolean): string {
+  return `rounded-full border px-3 py-1 text-xs font-medium transition ${
+    active ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-brand-100 text-charcoal-700 hover:border-brand-300'
+  }`;
+}
+
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; tag?: string; page?: string }>;
+}) {
+  const { category, tag, page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+
+  const [{ data: posts, pagination }, tags] = await Promise.all([
+    fetchBlogPosts({ page, limit: PAGE_SIZE, category, tag }),
+    fetchBlogTags(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-20">
@@ -22,13 +56,52 @@ export default async function BlogPage() {
         hair, and body better. Always consult our doctors for advice specific to you.
       </p>
 
+      <div className="mt-8 flex flex-wrap gap-2">
+        <Link href={`/blog${buildQuery({ tag })}`} className={pillClasses(!category)}>
+          All
+        </Link>
+        {CATEGORIES.map((c) => (
+          <Link key={c} href={`/blog${buildQuery({ category: c, tag })}`} className={pillClasses(category === c)}>
+            {formatCategoryLabel(c)}
+          </Link>
+        ))}
+      </div>
+
+      {tags.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-charcoal-700">Topics:</span>
+          {tags.map((t) => (
+            <Link key={t.slug} href={`/blog${buildQuery({ category, tag: t.slug })}`} className={tagPillClasses(tag === t.slug)}>
+              #{t.name}
+            </Link>
+          ))}
+          {tag && (
+            <Link href={`/blog${buildQuery({ category })}`} className="text-xs font-medium text-brand-600 hover:text-brand-700">
+              Clear topic ✕
+            </Link>
+          )}
+        </div>
+      )}
+
       {posts.length === 0 ? (
         <p className="mt-12 text-charcoal-700">
-          Our blog is being updated — please check back soon, or{' '}
-          <Link href="/contact" className="font-medium text-brand-600 hover:text-brand-700">
-            contact us
-          </Link>{' '}
-          with any questions in the meantime.
+          {category || tag ? (
+            <>
+              No articles in this section yet — browse{' '}
+              <Link href="/blog" className="font-medium text-brand-600 hover:text-brand-700">
+                all articles
+              </Link>{' '}
+              instead.
+            </>
+          ) : (
+            <>
+              Our blog is being updated — please check back soon, or{' '}
+              <Link href="/contact" className="font-medium text-brand-600 hover:text-brand-700">
+                contact us
+              </Link>{' '}
+              with any questions in the meantime.
+            </>
+          )}
         </p>
       ) : (
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -52,6 +125,23 @@ export default async function BlogPage() {
             </Link>
           ))}
         </div>
+      )}
+
+      {pagination.pages > 1 && (
+        <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Blog pagination">
+          {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((p) => (
+            <Link
+              key={p}
+              href={`/blog${buildQuery({ category, tag, page: p === 1 ? undefined : String(p) })}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition ${
+                p === pagination.page ? 'bg-brand-600 text-white' : 'bg-cream-100 text-charcoal-700 hover:bg-cream-200'
+              }`}
+              aria-current={p === pagination.page ? 'page' : undefined}
+            >
+              {p}
+            </Link>
+          ))}
+        </nav>
       )}
 
       <div className="mt-16 rounded-2xl bg-cream-100 p-8 text-center">
