@@ -69,6 +69,10 @@ export function Footer() {
         <Link href="/faq" className="hover:text-brand-600">
           FAQ
         </Link>{' '}
+        ·{' '}
+        <Link href="/blog" className="hover:text-brand-600">
+          Blog
+        </Link>{' '}
         · © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
       </div>
     </footer>

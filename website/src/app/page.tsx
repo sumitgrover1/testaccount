@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { fetchPublicTreatments, fetchGoogleReviews, fetchInstagramGallery } from '@/lib/api';
 import { siteConfig, buildWhatsAppUrl } from '@/config/site';
-import { getCategoryIcon } from '@/lib/categoryIcon';
+import { CategoryIconBadge } from '@/lib/categoryIcon';
 import { HeroVisual } from '@/components/HeroVisual';
 
 const highlights = [
@@ -119,24 +119,21 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {featured.map((t) => {
-              const CategoryIcon = getCategoryIcon(t.category);
-              return (
-                <Link
-                  key={t.id}
-                  href={`/contact?treatment=${encodeURIComponent(t.name)}`}
-                  className="rounded-2xl border border-brand-100 p-6 transition hover:border-brand-300 hover:shadow-sm"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                    <CategoryIcon className="h-5 w-5" aria-hidden />
-                  </div>
-                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-brand-600">{t.category}</p>
-                  <h3 className="mt-2 font-serif text-lg text-charcoal-900">{t.name}</h3>
-                  {t.description && <p className="mt-2 text-sm text-charcoal-700 line-clamp-3">{t.description}</p>}
-                  <p className="mt-3 text-sm font-medium text-brand-600">Enquire about this →</p>
-                </Link>
-              );
-            })}
+            {featured.map((t) => (
+              <Link
+                key={t.id}
+                href={`/contact?treatment=${encodeURIComponent(t.name)}`}
+                className="rounded-2xl border border-brand-100 p-6 transition hover:border-brand-300 hover:shadow-sm"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                  <CategoryIconBadge category={t.category} className="h-5 w-5" />
+                </div>
+                <p className="mt-3 text-xs font-medium uppercase tracking-wide text-brand-600">{t.category}</p>
+                <h3 className="mt-2 font-serif text-lg text-charcoal-900">{t.name}</h3>
+                {t.description && <p className="mt-2 text-sm text-charcoal-700 line-clamp-3">{t.description}</p>}
+                <p className="mt-3 text-sm font-medium text-brand-600">Enquire about this →</p>
+              </Link>
+            ))}
           </div>
         </section>
       )}

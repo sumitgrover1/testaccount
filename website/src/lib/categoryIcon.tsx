@@ -1,18 +1,17 @@
-import { Activity, Heart, Scissors, Sparkles, TrendingDown, UserRound, Zap, type LucideIcon } from 'lucide-react';
+import { Activity, Heart, Scissors, Sparkles, TrendingDown, UserRound, Zap } from 'lucide-react';
 
-// Maps a treatment's free-text category (set from the admin panel) to a
-// representative icon — a lightweight visual cue without needing real
-// photography for every category.
-const ICONS: { match: RegExp; icon: LucideIcon }[] = [
-  { match: /laser/i, icon: Zap },
-  { match: /hair/i, icon: Scissors },
-  { match: /skin/i, icon: Sparkles },
-  { match: /body/i, icon: Activity },
-  { match: /weight/i, icon: TrendingDown },
-  { match: /bridal/i, icon: Heart },
-  { match: /men/i, icon: UserRound },
-];
-
-export function getCategoryIcon(category: string): LucideIcon {
-  return ICONS.find((entry) => entry.match.test(category))?.icon ?? Sparkles;
+// A small badge rendering an icon representing a treatment/blog category —
+// a lightweight visual cue without needing real photography for every
+// category. Each icon is rendered as a static JSX tag (never assigned to a
+// variable and used as a dynamic tag) since resolving a component
+// reference at render time trips the react-hooks/static-components rule.
+export function CategoryIconBadge({ category, className = 'h-4 w-4' }: { category: string; className?: string }) {
+  if (/laser/i.test(category)) return <Zap className={className} aria-hidden />;
+  if (/hair/i.test(category)) return <Scissors className={className} aria-hidden />;
+  if (/skin/i.test(category)) return <Sparkles className={className} aria-hidden />;
+  if (/weight/i.test(category)) return <TrendingDown className={className} aria-hidden />;
+  if (/body/i.test(category)) return <Activity className={className} aria-hidden />;
+  if (/bridal/i.test(category)) return <Heart className={className} aria-hidden />;
+  if (/men/i.test(category)) return <UserRound className={className} aria-hidden />;
+  return <Sparkles className={className} aria-hidden />;
 }
