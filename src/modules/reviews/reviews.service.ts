@@ -19,6 +19,7 @@ export interface GoogleReviewsResult {
 
 interface PlaceDetailsResponse {
   status: string;
+  error_message?: string;
   result?: {
     rating?: number;
     user_ratings_total?: number;
@@ -56,7 +57,10 @@ export async function getGoogleReviews(): Promise<GoogleReviewsResult> {
   const body = (await res.json()) as PlaceDetailsResponse;
 
   if (body.status !== 'OK' || !body.result) {
-    logger.warn({ status: body.status }, 'Google Places API did not return place details');
+    logger.warn(
+      { status: body.status, errorMessage: body.error_message },
+      'Google Places API did not return place details',
+    );
     // Serve stale cache rather than an empty result if a previous fetch succeeded.
     return cache?.data ?? { configured: true, reviews: [] };
   }
