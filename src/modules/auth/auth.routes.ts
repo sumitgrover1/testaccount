@@ -8,19 +8,13 @@ import {
   changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
-  registerSchema,
   resetPasswordSchema,
 } from './auth.validation';
 
 const router = Router();
 
-router.post(
-  '/register',
-  authRateLimiter,
-  validate({ body: registerSchema }),
-  authController.register,
-);
-
+// Staff accounts are provisioned by an admin (see users.routes.ts POST /users) —
+// there is no public self-registration endpoint on a clinic staff system.
 router.post('/login', authRateLimiter, validate({ body: loginSchema }), authController.login);
 
 // Refresh/logout rely on the httpOnly refresh cookie, so they need CSRF

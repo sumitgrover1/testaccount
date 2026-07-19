@@ -1,3 +1,4 @@
+import ms from 'ms';
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../common/utils/asyncHandler';
 import { env } from '../../config/env';
@@ -8,7 +9,6 @@ import type {
   ChangePasswordInput,
   ForgotPasswordInput,
   LoginInput,
-  RegisterInput,
   ResetPasswordInput,
 } from './auth.validation';
 
@@ -25,23 +25,17 @@ function setRefreshCookie(res: Response, token: string): void {
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: REFRESH_COOKIE_PATH,
+    // Without an explicit maxAge this would default to a session cookie
+    // (cleared when the browser closes), which would silently cut every
+    // session down to "until you close the tab" regardless of the refresh
+    // token's actual (7d default) validity — match the two explicitly.
+    maxAge: ms(env.JWT_REFRESH_EXPIRY),
   });
 }
 
 function clearRefreshCookie(res: Response): void {
   res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
 }
-
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  const input = req.body as RegisterInput;
-  const { accessToken, refreshToken, userId } = await authService.register(
-    input,
-    requestContext(req),
-  );
-  setRefreshCookie(res, refreshToken);
-  issueCsrfCookie(res);
-  res.status(201).json({ data: { accessToken, userId } });
-});
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const input = req.body as LoginInput;

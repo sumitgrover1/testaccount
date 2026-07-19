@@ -1,7 +1,7 @@
 {
-  "name": "lms-backend",
+  "name": "clinic-management-backend",
   "version": "1.0.0",
-  "description": "Enterprise-grade Learning Management System backend (Node.js + Express + TypeScript)",
+  "description": "Enterprise-grade Clinic Management Platform backend (Node.js + Express + TypeScript)",
   "private": true,
   "license": "UNLICENSED",
   "engines": {
@@ -23,8 +23,12 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
     "audit": "npm audit --audit-level=moderate",
     "prepare": "husky"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -77,7 +81,7 @@
     "typescript": "^5.5.4"
   },
   "lint-staged": {
-    "*.ts": [
+    "(src|tests)/**/*.ts": [
       "eslint --fix",
       "prettier --write"
     ]

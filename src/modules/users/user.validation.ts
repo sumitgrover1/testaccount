@@ -1,22 +1,19 @@
 import { Role } from '@prisma/client';
 import { z } from 'zod';
+import {
+  emailSchema,
+  passwordSchema,
+  personNameSchema,
+  uuidParamSchema,
+} from '../../common/validation/primitives';
 
-export const idParamSchema = z.object({
-  id: z.string().uuid('Invalid id'),
-});
+export const idParamSchema = uuidParamSchema;
 export type IdParam = z.infer<typeof idParamSchema>;
-
-const name = z
-  .string()
-  .trim()
-  .min(1)
-  .max(100)
-  .regex(/^[\p{L} .'-]+$/u, 'Name contains invalid characters');
 
 export const updateProfileSchema = z
   .object({
-    firstName: name.optional(),
-    lastName: name.optional(),
+    firstName: personNameSchema.optional(),
+    lastName: personNameSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: 'No fields provided to update' });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
@@ -28,6 +25,18 @@ export const listUsersQuerySchema = z.object({
   search: z.string().trim().max(254).optional(),
 });
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
+
+// Staff accounts are provisioned by an admin, not self-service — the role is
+// mandatory and set explicitly here rather than defaulted, so there's never an
+// ambiguous "no role yet" account.
+export const createStaffSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  firstName: personNameSchema,
+  lastName: personNameSchema,
+  role: z.nativeEnum(Role),
+});
+export type CreateStaffInput = z.infer<typeof createStaffSchema>;
 
 // Role and active-state changes are privileged operations restricted to admins;
 // deliberately kept out of updateProfileSchema so a regular user can never

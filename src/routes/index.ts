@@ -1,14 +1,36 @@
 import { Router } from 'express';
 import authRoutes from '../modules/auth/auth.routes';
 import userRoutes from '../modules/users/user.routes';
-import courseRoutes from '../modules/courses/course.routes';
-import enrollmentRoutes from '../modules/enrollments/enrollment.routes';
+import patientRoutes from '../modules/patients/patient.routes';
+import leadRoutes from '../modules/leads/lead.routes';
+import treatmentRoutes from '../modules/treatments/treatment.routes';
+import packageRoutes from '../modules/packages/package.routes';
+import pricingRoutes from '../modules/pricing/pricing.routes';
+import treatmentEnrollmentRoutes from '../modules/treatment-enrollments/treatment-enrollment.routes';
+import appointmentRoutes from '../modules/appointments/appointment.routes';
+import inventoryRoutes from '../modules/inventory/inventory.routes';
+import billingRoutes from '../modules/billing/billing.routes';
+import marketingRoutes from '../modules/marketing/marketing.routes';
+import followUpRoutes from '../modules/followups/followup.routes';
+import communicationRoutes from '../modules/communications/communication.routes';
+import dashboardRoutes from '../modules/dashboard/dashboard.routes';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
-router.use('/courses', courseRoutes);
-router.use('/enrollments', enrollmentRoutes);
+router.use('/patients', patientRoutes);
+router.use('/leads', leadRoutes);
+router.use('/treatments', treatmentRoutes);
+router.use('/packages', packageRoutes);
+router.use('/pricing', pricingRoutes);
+router.use('/treatment-enrollments', treatmentEnrollmentRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/inventory', inventoryRoutes);
+router.use('/billing', billingRoutes);
+router.use('/marketing', marketingRoutes);
+router.use('/followups', followUpRoutes);
+router.use('/communications', communicationRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;

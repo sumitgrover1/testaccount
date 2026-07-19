@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-cream-50 text-charcoal-900 antialiased;
+}
+
+::selection {
+  @apply bg-blush-200;
+}

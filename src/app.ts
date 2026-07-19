@@ -45,7 +45,17 @@ export function createApp(): Express {
   app.use(hppMiddleware);
   app.use(compression());
   // Body size limits bound request payloads to mitigate memory-exhaustion DoS.
-  app.use(express.json({ limit: '100kb' }));
+  app.use(
+    express.json({
+      limit: '100kb',
+      // Retained for webhook signature verification (see marketing.routes.ts) —
+      // HMAC signatures are computed over the exact raw bytes sent, which a
+      // parsed-then-reserialized body would not reliably reproduce.
+      verify: (req, _res, buf) => {
+        (req as express.Request).rawBody = buf;
+      },
+    }),
+  );
   app.use(express.urlencoded({ extended: false, limit: '100kb' }));
   app.use(cookieParser(env.COOKIE_SECRET));
   app.use(generalRateLimiter);

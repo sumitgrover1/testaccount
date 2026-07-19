@@ -20,8 +20,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
-  JWT_ISSUER: z.string().default('lms-backend'),
-  JWT_AUDIENCE: z.string().default('lms-clients'),
+  JWT_ISSUER: z.string().default('clinic-backend'),
+  JWT_AUDIENCE: z.string().default('clinic-clients'),
 
   COOKIE_SECRET: z.string().min(32, 'COOKIE_SECRET must be at least 32 characters'),
 
@@ -33,6 +33,18 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(300),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+
+  // Counselors/receptionists may discount a patient-specific treatment price by
+  // up to this percent below the treatment's default price without approval;
+  // beyond it, a PricingApprovalRequest is created instead (see pricing.service.ts).
+  PRICING_MAX_UNAPPROVED_DISCOUNT_PERCENT: z.coerce.number().min(0).max(100).default(15),
+
+  // Shared secrets for verifying inbound ad-platform lead webhooks (see
+  // marketing.routes.ts). Optional — a webhook without its secret configured
+  // is rejected at request time rather than at boot, since these are
+  // per-integration credentials, not core app config.
+  MARKETING_WEBHOOK_SECRET_FACEBOOK: z.string().optional(),
+  MARKETING_WEBHOOK_SECRET_GOOGLE: z.string().optional(),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });

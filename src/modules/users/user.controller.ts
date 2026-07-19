@@ -2,11 +2,18 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '../../common/utils/asyncHandler';
 import * as userService from './user.service';
 import type {
+  CreateStaffInput,
   IdParam,
   ListUsersQuery,
   UpdateProfileInput,
   UpdateUserAdminInput,
 } from './user.validation';
+
+export const createStaffUser = asyncHandler(async (req: Request, res: Response) => {
+  const input = req.body as CreateStaffInput;
+  const user = await userService.createStaffUser(input, req.user!.id);
+  res.status(201).json({ data: user });
+});
 
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.getUserById(req.user!.id);
