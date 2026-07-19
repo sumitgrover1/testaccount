@@ -346,6 +346,12 @@ export interface PricingApprovalRequest {
 
 export type BlogCategory = 'SKIN' | 'HAIR' | 'WEIGHT_MANAGEMENT' | 'GENERAL';
 
+export interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -356,6 +362,7 @@ export interface BlogPost {
   readTimeMinutes: number;
   isPublished: boolean;
   publishedAt?: string | null;
+  tags: BlogTag[];
   createdAt: string;
   updatedAt: string;
 }

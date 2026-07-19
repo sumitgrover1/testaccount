@@ -23,8 +23,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await fetchBlogPostBySlug(slug);
   if (!post) notFound();
 
-  const allPosts = await fetchBlogPosts();
-  const related = allPosts.filter((p) => p.category === post.category && p.slug !== post.slug).slice(0, 3);
+  const { data: sameCategoryPosts } = await fetchBlogPosts({ category: post.category, limit: 4 });
+  const related = sameCategoryPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -67,6 +67,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </p>
         ))}
       </div>
+
+      {post.tags.length > 0 && (
+        <div className="mt-8 flex flex-wrap gap-2">
+          {post.tags.map((t) => (
+            <Link
+              key={t.slug}
+              href={`/blog?tag=${t.slug}`}
+              className="rounded-full border border-brand-100 px-3 py-1 text-xs font-medium text-charcoal-700 transition hover:border-brand-300"
+            >
+              #{t.name}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mt-12 rounded-2xl bg-cream-100 p-8 text-center">
         <h3 className="font-serif text-xl text-charcoal-900">Have questions about this?</h3>

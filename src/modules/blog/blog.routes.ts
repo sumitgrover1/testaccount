@@ -9,6 +9,7 @@ import {
   createBlogPostSchema,
   idParamSchema,
   listBlogPostsQuerySchema,
+  publicListBlogPostsQuerySchema,
   slugParamSchema,
   updateBlogPostSchema,
 } from './blog.validation';
@@ -21,7 +22,12 @@ const BLOG_EDITORS = [...ADMIN_ROLES, Role.MARKETING_TEAM] as const;
 // pages. Registered before authenticate so they stay open, and mounted
 // ahead of the authenticated /:id route so /public-list can never be
 // shadowed by it.
-router.get('/public-list', blogController.listPublicBlogPosts);
+router.get(
+  '/public-list',
+  validate({ query: publicListBlogPostsQuerySchema }),
+  blogController.listPublicBlogPosts,
+);
+router.get('/public-tags', blogController.listPublicBlogTags);
 router.get(
   '/public/:slug',
   validate({ params: slugParamSchema }),

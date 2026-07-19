@@ -9,6 +9,7 @@ export interface BlogPostInput {
   content: string[];
   readTimeMinutes?: number;
   isPublished?: boolean;
+  tags?: string[];
 }
 
 export async function createBlogPost(input: BlogPostInput) {

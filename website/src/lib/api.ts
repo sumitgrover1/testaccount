@@ -92,6 +92,11 @@ export async function fetchInstagramGallery(): Promise<InstagramGalleryResult> {
   }
 }
 
+export interface BlogTag {
+  name: string;
+  slug: string;
+}
+
 export interface BlogPostSummary {
   id: string;
   slug: string;
@@ -100,21 +105,56 @@ export interface BlogPostSummary {
   excerpt: string;
   readTimeMinutes: number;
   publishedAt: string;
+  tags: BlogTag[];
 }
 
 export interface BlogPostDetail extends BlogPostSummary {
   content: string[];
 }
 
+export interface Paginated<T> {
+  data: T[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
 // Server-side fetch for the Blog list page — published articles, managed
-// from the admin panel's Blog section.
-export async function fetchBlogPosts(): Promise<BlogPostSummary[]> {
+// from the admin panel's Blog section. Paged (10/page by default) and
+// optionally filtered to one category and/or tag subsection.
+export async function fetchBlogPosts(params: {
+  page?: number;
+  limit?: number;
+  category?: string;
+  tag?: string;
+} = {}): Promise<Paginated<BlogPostSummary>> {
+  const empty = { data: [], pagination: { page: 1, limit: params.limit ?? 10, total: 0, pages: 0 } };
   try {
-    const res = await fetch(`${API_BASE_URL}/blog/public-list`, {
+    const query = new URLSearchParams();
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.category) query.set('category', params.category);
+    if (params.tag) query.set('tag', params.tag);
+    const qs = query.toString();
+
+    const res = await fetch(`${API_BASE_URL}/blog/public-list${qs ? `?${qs}` : ''}`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return empty;
+    const body = (await res.json()) as Paginated<BlogPostSummary>;
+    return body;
+  } catch {
+    return empty;
+  }
+}
+
+// Server-side fetch for the Blog list page's "browse by topic" subsection —
+// only tags with at least one published post.
+export async function fetchBlogTags(): Promise<BlogTag[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/blog/public-tags`, {
       next: { revalidate: 300 },
     });
     if (!res.ok) return [];
-    const body = (await res.json()) as { data: BlogPostSummary[] };
+    const body = (await res.json()) as { data: BlogTag[] };
     return body.data;
   } catch {
     return [];
