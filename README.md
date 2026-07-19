@@ -109,6 +109,17 @@ change that password immediately after first login if you rely on the
 default.) From there, that admin can create every other staff account from
 the admin panel's Staff page, or directly via `POST /api/v1/users`.
 
+Optionally, seed a starter treatment/package catalog (39 treatments across
+Skin/Hair/Laser/Body/Men's Grooming/Bridal/Weight Loss + 12 bundled
+packages, at market-typical pricing) so Packages/Invoices/Enrollments have
+real data instead of empty dropdowns:
+
+```bash
+npm run prisma:seed:catalog
+```
+
+Safe to re-run — skips any treatment/package whose name already exists.
+
 ### Scripts
 
 | Command | Purpose |
