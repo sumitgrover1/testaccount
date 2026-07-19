@@ -15,7 +15,7 @@ export function Sidebar() {
     <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
       <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
         <Stethoscope className="h-6 w-6 text-brand-600" />
-        <span className="text-sm font-semibold text-slate-800">Clinic Admin</span>
+        <span className="text-sm font-semibold text-slate-800">Lumine Clinic Admin</span>
       </div>
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
         {NAV_ITEMS.filter((item) => isNavItemVisible(item, user?.role)).map((item) => {

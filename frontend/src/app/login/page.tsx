@@ -41,7 +41,7 @@ export default function LoginPage() {
           <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <Stethoscope className="h-6 w-6" />
           </span>
-          <h1 className="text-lg font-semibold text-slate-900">Clinic Admin</h1>
+          <h1 className="text-lg font-semibold text-slate-900">Lumine Clinic Admin</h1>
           <p className="text-sm text-slate-500">Sign in with your staff account</p>
         </div>
 
