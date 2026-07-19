@@ -49,9 +49,9 @@ const emptyItem: ItemFormValues = {
 };
 
 export function InvoiceForm({ onSubmit, isSubmitting }: { onSubmit: (values: InvoiceFormOutput) => Promise<void>; isSubmitting: boolean }) {
-  const { data: patients } = useQuery({ queryKey: ['patients', 'for-invoice'], queryFn: () => patientsApi.listPatients({ limit: 200 }) });
-  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-invoice'], queryFn: () => treatmentsApi.listTreatments({ limit: 200 }) });
-  const { data: packages } = useQuery({ queryKey: ['packages', 'for-invoice'], queryFn: () => packagesApi.listPackages({ limit: 200 }) });
+  const { data: patients } = useQuery({ queryKey: ['patients', 'for-invoice'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
+  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-invoice'], queryFn: () => treatmentsApi.listTreatments({ limit: 100 }) });
+  const { data: packages } = useQuery({ queryKey: ['packages', 'for-invoice'], queryFn: () => packagesApi.listPackages({ limit: 100 }) });
 
   const { register, control, handleSubmit, watch } = useForm<FormValues>({ defaultValues: { items: [emptyItem] } });
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });

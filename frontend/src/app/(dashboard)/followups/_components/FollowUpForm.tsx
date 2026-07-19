@@ -30,9 +30,9 @@ export interface FollowUpFormOutput {
 
 export function FollowUpForm({ onSubmit, isSubmitting }: { onSubmit: (values: FollowUpFormOutput) => Promise<void>; isSubmitting: boolean }) {
   const [targetType, setTargetType] = useState<'lead' | 'patient'>('lead');
-  const { data: leads } = useQuery({ queryKey: ['leads', 'for-followup'], queryFn: () => leadsApi.listLeads({ limit: 200 }) });
-  const { data: patients } = useQuery({ queryKey: ['patients', 'for-followup'], queryFn: () => patientsApi.listPatients({ limit: 200 }) });
-  const { data: staff } = useQuery({ queryKey: ['users', 'for-followup'], queryFn: () => usersApi.listUsers({ limit: 200 }) });
+  const { data: leads } = useQuery({ queryKey: ['leads', 'for-followup'], queryFn: () => leadsApi.listLeads({ limit: 100 }) });
+  const { data: patients } = useQuery({ queryKey: ['patients', 'for-followup'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
+  const { data: staff } = useQuery({ queryKey: ['users', 'for-followup'], queryFn: () => usersApi.listUsers({ limit: 100 }) });
 
   const { register, handleSubmit } = useForm<FormValues>({ defaultValues: { channel: 'CALL' } });
 

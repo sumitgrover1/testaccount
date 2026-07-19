@@ -27,7 +27,7 @@ interface ConfirmFormValues {
 function ConfirmItemForm({ invoiceId, item }: { invoiceId: string; item: PurchaseInvoiceItem }) {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
-  const { data: products } = useQuery({ queryKey: ['inventory', 'products', 'all'], queryFn: () => inventoryApi.listProducts({ limit: 200 }) });
+  const { data: products } = useQuery({ queryKey: ['inventory', 'products', 'all'], queryFn: () => inventoryApi.listProducts({ limit: 100 }) });
   const { register, handleSubmit } = useForm<ConfirmFormValues>({
     defaultValues: {
       matchedProductId: item.matchedProductId ?? '',

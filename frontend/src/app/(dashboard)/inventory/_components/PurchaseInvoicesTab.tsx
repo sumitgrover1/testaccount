@@ -32,7 +32,7 @@ export function PurchaseInvoicesTab() {
     queryKey: ['inventory', 'purchase-invoices'],
     queryFn: () => inventoryApi.listPurchaseInvoices({ limit: 50 }),
   });
-  const { data: suppliers } = useQuery({ queryKey: ['inventory', 'suppliers', 'all'], queryFn: () => inventoryApi.listSuppliers({ limit: 200 }) });
+  const { data: suppliers } = useQuery({ queryKey: ['inventory', 'suppliers', 'all'], queryFn: () => inventoryApi.listSuppliers({ limit: 100 }) });
   const { register, handleSubmit, reset } = useForm<FormValues>();
 
   const createMutation = useMutation({

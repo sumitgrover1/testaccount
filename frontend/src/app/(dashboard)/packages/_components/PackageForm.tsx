@@ -27,7 +27,7 @@ type FormValues = z.infer<typeof schema>;
 export function PackageForm({ onSubmit, isSubmitting }: { onSubmit: (values: PackageInput) => Promise<void>; isSubmitting: boolean }) {
   const { data: treatments } = useQuery({
     queryKey: ['treatments', 'for-package-form'],
-    queryFn: () => treatmentsApi.listTreatments({ limit: 200, isActive: true }),
+    queryFn: () => treatmentsApi.listTreatments({ limit: 100, isActive: true }),
   });
 
   const {

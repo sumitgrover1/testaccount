@@ -20,9 +20,9 @@ interface FormValues {
 }
 
 export function AppointmentForm({ onSubmit, isSubmitting }: { onSubmit: (values: AppointmentInput) => Promise<void>; isSubmitting: boolean }) {
-  const { data: patients } = useQuery({ queryKey: ['patients', 'for-appointment'], queryFn: () => patientsApi.listPatients({ limit: 200 }) });
-  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-appointment'], queryFn: () => treatmentsApi.listTreatments({ limit: 200, isActive: true }) });
-  const { data: doctors } = useQuery({ queryKey: ['users', 'doctors'], queryFn: () => usersApi.listUsers({ role: 'DOCTOR', limit: 200 }) });
+  const { data: patients } = useQuery({ queryKey: ['patients', 'for-appointment'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
+  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-appointment'], queryFn: () => treatmentsApi.listTreatments({ limit: 100, isActive: true }) });
+  const { data: doctors } = useQuery({ queryKey: ['users', 'doctors'], queryFn: () => usersApi.listUsers({ role: 'DOCTOR', limit: 100 }) });
 
   const { register, handleSubmit } = useForm<FormValues>();
 

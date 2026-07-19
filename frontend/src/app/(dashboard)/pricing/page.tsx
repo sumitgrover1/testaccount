@@ -24,8 +24,8 @@ export default function PricingPage() {
   const [reason, setReason] = useState('');
   const queryClient = useQueryClient();
 
-  const { data: patients } = useQuery({ queryKey: ['patients', 'for-pricing'], queryFn: () => patientsApi.listPatients({ limit: 200 }) });
-  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-pricing'], queryFn: () => treatmentsApi.listTreatments({ limit: 200 }) });
+  const { data: patients } = useQuery({ queryKey: ['patients', 'for-pricing'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
+  const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-pricing'], queryFn: () => treatmentsApi.listTreatments({ limit: 100 }) });
 
   const effectivePriceQuery = useQuery({
     queryKey: ['pricing', 'effective', patientId, treatmentId],

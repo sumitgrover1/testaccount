@@ -26,8 +26,8 @@ export default function CommunicationsPage() {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useToast();
 
-  const { data: leads } = useQuery({ queryKey: ['leads', 'for-comms'], queryFn: () => leadsApi.listLeads({ limit: 200 }) });
-  const { data: patients } = useQuery({ queryKey: ['patients', 'for-comms'], queryFn: () => patientsApi.listPatients({ limit: 200 }) });
+  const { data: leads } = useQuery({ queryKey: ['leads', 'for-comms'], queryFn: () => leadsApi.listLeads({ limit: 100 }) });
+  const { data: patients } = useQuery({ queryKey: ['patients', 'for-comms'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
 
   const timelineQuery = useQuery({
     queryKey: ['communications', 'timeline', targetType, targetId],
