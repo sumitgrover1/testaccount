@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { fetchBlogPosts, fetchBlogTags } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 import { CategoryIconBadge, formatCategoryLabel } from '@/lib/categoryIcon';
+import { BlogCover } from '@/components/BlogCover';
 
 export const metadata: Metadata = {
   title: 'Skin, Hair & Weight Management Blog',
@@ -109,19 +110,22 @@ export default async function BlogPage({
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
-              className="flex flex-col rounded-2xl border border-brand-100 p-6 transition hover:border-brand-300 hover:shadow-sm"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-brand-100 transition hover:border-brand-300 hover:shadow-sm"
             >
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-                  <CategoryIconBadge category={post.category} />
-                </span>
-                <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
-                  {formatCategoryLabel(post.category)}
-                </span>
+              <BlogCover slug={post.slug} category={post.category} />
+              <div className="flex flex-1 flex-col p-6">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                    <CategoryIconBadge category={post.category} />
+                  </span>
+                  <span className="text-xs font-medium uppercase tracking-wide text-brand-600">
+                    {formatCategoryLabel(post.category)}
+                  </span>
+                </div>
+                <h2 className="mt-3 font-serif text-lg text-charcoal-900">{post.title}</h2>
+                <p className="mt-2 flex-1 text-sm text-charcoal-700">{post.excerpt}</p>
+                <p className="mt-4 text-xs text-charcoal-700">{post.readTimeMinutes} min read</p>
               </div>
-              <h2 className="mt-3 font-serif text-lg text-charcoal-900">{post.title}</h2>
-              <p className="mt-2 flex-1 text-sm text-charcoal-700">{post.excerpt}</p>
-              <p className="mt-4 text-xs text-charcoal-700">{post.readTimeMinutes} min read</p>
             </Link>
           ))}
         </div>
