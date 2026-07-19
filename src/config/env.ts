@@ -46,6 +46,13 @@ const envSchema = z.object({
   MARKETING_WEBHOOK_SECRET_FACEBOOK: z.string().optional(),
   MARKETING_WEBHOOK_SECRET_GOOGLE: z.string().optional(),
 
+  // Google Business Profile reviews, surfaced on the public website's
+  // Testimonials page (see reviews.service.ts). Optional — the endpoint
+  // returns an empty/not-configured response until both are set, rather
+  // than failing at boot, since this is an optional integration.
+  GOOGLE_PLACES_API_KEY: z.string().optional(),
+  GOOGLE_PLACE_ID: z.string().optional(),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

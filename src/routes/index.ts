@@ -14,6 +14,7 @@ import marketingRoutes from '../modules/marketing/marketing.routes';
 import followUpRoutes from '../modules/followups/followup.routes';
 import communicationRoutes from '../modules/communications/communication.routes';
 import dashboardRoutes from '../modules/dashboard/dashboard.routes';
+import reviewsRoutes from '../modules/reviews/reviews.routes';
 
 const router = Router();
 
@@ -32,5 +33,6 @@ router.use('/marketing', marketingRoutes);
 router.use('/followups', followUpRoutes);
 router.use('/communications', communicationRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/reviews', reviewsRoutes);
 
 export default router;

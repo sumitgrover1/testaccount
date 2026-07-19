@@ -180,7 +180,7 @@ in your shell or an `.env` file read by `docker compose` before starting.
 
 ## Public (unauthenticated) endpoints
 
-Two endpoints intentionally sit outside the auth wall, for the public
+Three endpoints intentionally sit outside the auth wall, for the public
 marketing website (`website/`) — everything else requires a staff login:
 
 - `GET /api/v1/treatments/public-list` — active treatments only, limited to
@@ -190,6 +190,15 @@ marketing website (`website/`) — everything else requires a staff login:
   Creates a `Lead` (source `WEBSITE_FORM`), rate-limited like other
   public-facing endpoints. Add the website's origin to `CORS_ORIGIN` (see
   `.env.example`) or the browser will block both calls.
+- `GET /api/v1/reviews/google` — real reviews from the clinic's Google
+  Business Profile, for the website's Testimonials page. Proxied through
+  the backend (rather than called from the browser) so the Google API key
+  stays server-side, and cached for an hour to limit API cost. Optional —
+  returns `{ configured: false }` until you set `GOOGLE_PLACES_API_KEY`
+  (Google Cloud Console → enable "Places API") and `GOOGLE_PLACE_ID` (find
+  yours at
+  https://developers.google.com/maps/documentation/places/web-service/place-id)
+  in `.env`.
 
 ## Integration points not wired to a live provider
 
