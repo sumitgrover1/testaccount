@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { siteConfig } from '@/config/site';
+import { siteConfig, buildWhatsAppUrl } from '@/config/site';
 
 export function Footer() {
   return (
@@ -45,6 +45,14 @@ export function Footer() {
           <a href={`mailto:${siteConfig.email}`} className="mt-1 block text-sm text-charcoal-700 hover:text-blush-600">
             {siteConfig.email}
           </a>
+          <a
+            href={buildWhatsAppUrl("Hi, I'd like to book a consultation at Lumine Aesthetics.")}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-1 block text-sm text-charcoal-700 hover:text-blush-600"
+          >
+            WhatsApp us
+          </a>
           <Link
             href="/contact"
             className="mt-4 inline-block rounded-full bg-blush-600 px-5 py-2 text-sm font-medium text-white hover:bg-blush-700"
@@ -54,7 +62,10 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-blush-100 py-4 text-center text-xs text-charcoal-700">
-        © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+        <Link href="/faq" className="hover:text-blush-600">
+          FAQ
+        </Link>{' '}
+        · © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
       </div>
     </footer>
   );

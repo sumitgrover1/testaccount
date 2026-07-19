@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 
-export const metadata: Metadata = { title: `Gallery — ${siteConfig.name}` };
+export const metadata: Metadata = {
+  title: 'Gallery',
+  description: `Before/after results and clinic photos from ${siteConfig.name}.`,
+  alternates: { canonical: '/gallery' },
+};
 
 // Placeholder tiles — replace the `label`s with real before/after photos once
 // available (drop images in /public and swap these divs for <Image> tags).
@@ -33,6 +38,17 @@ export default function GalleryPage() {
             {label}
           </div>
         ))}
+      </div>
+
+      <div className="mt-16 rounded-2xl bg-cream-100 p-8 text-center">
+        <h3 className="font-serif text-xl text-charcoal-900">Like what you see?</h3>
+        <p className="mt-2 text-sm text-charcoal-700">Book a consultation to discuss your own treatment plan.</p>
+        <Link
+          href="/contact"
+          className="mt-6 inline-block rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white hover:bg-blush-700"
+        >
+          Book a Consultation
+        </Link>
       </div>
     </div>
   );

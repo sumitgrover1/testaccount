@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { fetchPublicTreatments, type PublicTreatment } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 
-export const metadata: Metadata = { title: `Services — ${siteConfig.name}` };
+export const metadata: Metadata = {
+  title: 'Skin & Hair Treatments',
+  description: `Explore our skin, hair, and aesthetic treatments at ${siteConfig.name} in ${siteConfig.city}. Personalized pricing after a consultation.`,
+  alternates: { canonical: '/services' },
+};
 
 function groupByCategory(treatments: PublicTreatment[]) {
   const groups = new Map<string, PublicTreatment[]>();
@@ -43,13 +47,19 @@ export default async function ServicesPage() {
               <h2 className="font-serif text-2xl text-blush-700">{category}</h2>
               <div className="mt-6 grid gap-6 md:grid-cols-2">
                 {items.map((t) => (
-                  <div key={t.id} className="rounded-2xl border border-blush-100 p-6">
+                  <div key={t.id} className="flex flex-col rounded-2xl border border-blush-100 p-6">
                     <h3 className="font-serif text-lg text-charcoal-900">{t.name}</h3>
                     {t.description && <p className="mt-2 text-sm text-charcoal-700">{t.description}</p>}
                     <p className="mt-3 text-xs text-charcoal-700">
                       {t.durationMinutes} min · {t.numberOfSessions} session
                       {t.numberOfSessions > 1 ? 's' : ''}
                     </p>
+                    <Link
+                      href={`/contact?treatment=${encodeURIComponent(t.name)}`}
+                      className="mt-4 text-sm font-medium text-blush-600 hover:text-blush-700"
+                    >
+                      Enquire about this →
+                    </Link>
                   </div>
                 ))}
               </div>

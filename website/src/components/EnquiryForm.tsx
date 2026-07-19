@@ -1,15 +1,21 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { submitEnquiry } from '@/lib/api';
 
 const MOBILE_PATTERN = /^\+?[0-9]{7,15}$/;
 
 export function EnquiryForm() {
+  // Pre-fills "interested in" when arriving from a Services page CTA like
+  // /contact?treatment=Hydrafacial — one less field for the visitor to type.
+  const searchParams = useSearchParams();
+  const treatmentParam = searchParams.get('treatment');
+
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(treatmentParam ? `Interested in: ${treatmentParam}` : '');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [feedback, setFeedback] = useState<string | null>(null);
 

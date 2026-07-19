@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 
-export const metadata: Metadata = { title: `About — ${siteConfig.name}` };
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: `Learn about ${siteConfig.name}'s doctor-led approach to skin and hair care in ${siteConfig.city}.`,
+  alternates: { canonical: '/about' },
+};
 
 export default function AboutPage() {
   return (
@@ -27,6 +32,17 @@ export default function AboutPage() {
             clinic designed around your care.
           </p>
         </div>
+      </div>
+
+      <div className="mt-16 rounded-2xl bg-cream-100 p-8 text-center">
+        <h3 className="font-serif text-xl text-charcoal-900">Ready to get started?</h3>
+        <p className="mt-2 text-sm text-charcoal-700">Book a consultation and meet our team in person.</p>
+        <Link
+          href="/contact"
+          className="mt-6 inline-block rounded-full bg-blush-600 px-7 py-3 text-sm font-medium text-white hover:bg-blush-700"
+        >
+          Book a Consultation
+        </Link>
       </div>
     </div>
   );
