@@ -5,6 +5,7 @@ import { fetchBlogPostBySlug, fetchBlogPosts } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 import { CategoryIconBadge, formatCategoryLabel } from '@/lib/categoryIcon';
 import { JsonLd } from '@/components/JsonLd';
+import { BlogCover } from '@/components/BlogCover';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -43,6 +44,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <Link href="/blog" className="text-sm font-medium text-brand-600 hover:text-brand-700">
         ← Back to Blog
       </Link>
+
+      <div className="mt-6 overflow-hidden rounded-2xl">
+        <BlogCover slug={post.slug} category={post.category} size="hero" />
+      </div>
 
       <div className="mt-6 flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
@@ -101,10 +106,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <Link
                 key={r.slug}
                 href={`/blog/${r.slug}`}
-                className="rounded-2xl border border-brand-100 p-5 transition hover:border-brand-300 hover:shadow-sm"
+                className="group overflow-hidden rounded-2xl border border-brand-100 transition hover:border-brand-300 hover:shadow-sm"
               >
-                <h3 className="font-serif text-base text-charcoal-900">{r.title}</h3>
-                <p className="mt-2 text-xs text-charcoal-700">{r.readTimeMinutes} min read</p>
+                <BlogCover slug={r.slug} category={r.category} />
+                <div className="p-5">
+                  <h3 className="font-serif text-base text-charcoal-900">{r.title}</h3>
+                  <p className="mt-2 text-xs text-charcoal-700">{r.readTimeMinutes} min read</p>
+                </div>
               </Link>
             ))}
           </div>
