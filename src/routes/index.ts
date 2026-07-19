@@ -15,6 +15,7 @@ import followUpRoutes from '../modules/followups/followup.routes';
 import communicationRoutes from '../modules/communications/communication.routes';
 import dashboardRoutes from '../modules/dashboard/dashboard.routes';
 import reviewsRoutes from '../modules/reviews/reviews.routes';
+import galleryRoutes from '../modules/gallery/gallery.routes';
 
 const router = Router();
 
@@ -34,5 +35,6 @@ router.use('/followups', followUpRoutes);
 router.use('/communications', communicationRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reviews', reviewsRoutes);
+router.use('/gallery', galleryRoutes);
 
 export default router;

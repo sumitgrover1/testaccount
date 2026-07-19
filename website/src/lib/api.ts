@@ -60,6 +60,38 @@ export async function fetchGoogleReviews(): Promise<GoogleReviewsResult> {
   }
 }
 
+export interface InstagramPost {
+  id: string;
+  caption?: string;
+  mediaType: string;
+  imageUrl: string;
+  videoUrl?: string;
+  permalink: string;
+  timestamp: string;
+}
+
+export interface InstagramGalleryResult {
+  configured: boolean;
+  posts: InstagramPost[];
+}
+
+// Server-side fetch for the Gallery page — real posts from the clinic's
+// Instagram, proxied through our backend so the access token never reaches
+// the browser. Returns `configured: false` until INSTAGRAM_ACCESS_TOKEN is
+// set on the backend.
+export async function fetchInstagramGallery(): Promise<InstagramGalleryResult> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/gallery/instagram`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return { configured: false, posts: [] };
+    const body = (await res.json()) as { data: InstagramGalleryResult };
+    return body.data;
+  } catch {
+    return { configured: false, posts: [] };
+  }
+}
+
 export interface EnquiryInput {
   fullName: string;
   mobileNumber: string;

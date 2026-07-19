@@ -53,6 +53,16 @@ const envSchema = z.object({
   GOOGLE_PLACES_API_KEY: z.string().optional(),
   GOOGLE_PLACE_ID: z.string().optional(),
 
+  // Instagram Graph API, for the website's live Gallery feed (see
+  // instagram.service.ts). Optional — a long-lived token generated via a
+  // Meta Developer App connected to the clinic's Instagram professional
+  // account. Long-lived tokens last 60 days; the service auto-refreshes
+  // and persists the refreshed token to disk (see TOKEN_CACHE_FILE) so this
+  // .env value only needs to be the *initial* token, not kept up to date
+  // forever — though it must still be replaced if the server has been down
+  // long enough for the cached refresh to lapse past 60 days.
+  INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

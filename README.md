@@ -180,7 +180,7 @@ in your shell or an `.env` file read by `docker compose` before starting.
 
 ## Public (unauthenticated) endpoints
 
-Three endpoints intentionally sit outside the auth wall, for the public
+Four endpoints intentionally sit outside the auth wall, for the public
 marketing website (`website/`) — everything else requires a staff login:
 
 - `GET /api/v1/treatments/public-list` — active treatments only, limited to
@@ -199,6 +199,17 @@ marketing website (`website/`) — everything else requires a staff login:
   yours at
   https://developers.google.com/maps/documentation/places/web-service/place-id)
   in `.env`.
+- `GET /api/v1/gallery/instagram` — the clinic's real recent Instagram posts
+  (photos and videos), for the website's Gallery page. Proxied server-side
+  so the access token never reaches the browser, cached for an hour.
+  Optional — returns `{ configured: false }` until `INSTAGRAM_ACCESS_TOKEN`
+  is set in `.env` (a long-lived token from a Meta Developer App connected
+  to the clinic's Instagram professional account). Long-lived tokens last
+  60 days; this service auto-refreshes and persists the refreshed token to
+  `.instagram-token-cache.json` (gitignored) so the `.env` value only needs
+  to be the *initial* token, not kept current forever — though it must
+  still be manually replaced if the server has been down long enough for
+  the cached refresh to lapse past 60 days.
 
 ## Integration points not wired to a live provider
 
