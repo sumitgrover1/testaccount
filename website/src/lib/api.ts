@@ -27,6 +27,39 @@ export async function fetchPublicTreatments(): Promise<PublicTreatment[]> {
   }
 }
 
+export interface GoogleReview {
+  authorName: string;
+  authorPhotoUrl?: string;
+  rating: number;
+  relativeTimeDescription: string;
+  text: string;
+  time: number;
+}
+
+export interface GoogleReviewsResult {
+  configured: boolean;
+  rating?: number;
+  totalReviews?: number;
+  reviews: GoogleReview[];
+}
+
+// Server-side fetch for the Testimonials page — real reviews from the
+// clinic's Google Business Profile, proxied through our backend so the
+// Google API key never reaches the browser. Returns `configured: false`
+// until GOOGLE_PLACES_API_KEY/GOOGLE_PLACE_ID are set on the backend.
+export async function fetchGoogleReviews(): Promise<GoogleReviewsResult> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/reviews/google`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return { configured: false, reviews: [] };
+    const body = (await res.json()) as { data: GoogleReviewsResult };
+    return body.data;
+  } catch {
+    return { configured: false, reviews: [] };
+  }
+}
+
 export interface EnquiryInput {
   fullName: string;
   mobileNumber: string;
