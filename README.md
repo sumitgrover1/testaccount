@@ -74,6 +74,16 @@ Each domain module follows the same shape: `*.validation.ts` (zod schemas) →
 
 ### Setup
 
+**Windows one-shot option**: run `powershell -ExecutionPolicy Bypass -File .\setup.ps1`
+from the repo root. It generates real secrets, writes `.env` /
+`frontend/.env.local` / `website/.env.local`, installs dependencies for all
+three projects, runs migrations, seeds the first admin account, and opens
+each dev server in its own window — no manual editing needed unless your
+MySQL isn't `root`/`root` on `localhost:3306` (pass `-DbUser`/`-DbPassword`/
+etc. if so). Safe to re-run; it never overwrites an existing `.env` file.
+
+Manual/cross-platform setup:
+
 ```bash
 cp .env.example .env
 # Edit .env: set DATABASE_URL and generate real secrets, e.g.
