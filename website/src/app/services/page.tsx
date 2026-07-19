@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { fetchPublicTreatments, type PublicTreatment } from '@/lib/api';
 import { siteConfig } from '@/config/site';
+import { getCategoryIcon } from '@/lib/categoryIcon';
 
 export const metadata: Metadata = {
   title: 'Skin & Hair Treatments',
@@ -42,29 +43,38 @@ export default async function ServicesPage() {
         </p>
       ) : (
         <div className="mt-12 space-y-12">
-          {Array.from(groups.entries()).map(([category, items]) => (
-            <div key={category}>
-              <h2 className="font-serif text-2xl text-brand-700">{category}</h2>
-              <div className="mt-6 grid gap-6 md:grid-cols-2">
-                {items.map((t) => (
-                  <div key={t.id} className="flex flex-col rounded-2xl border border-brand-100 p-6">
-                    <h3 className="font-serif text-lg text-charcoal-900">{t.name}</h3>
-                    {t.description && <p className="mt-2 text-sm text-charcoal-700">{t.description}</p>}
-                    <p className="mt-3 text-xs text-charcoal-700">
-                      {t.durationMinutes} min · {t.numberOfSessions} session
-                      {t.numberOfSessions > 1 ? 's' : ''}
-                    </p>
-                    <Link
-                      href={`/contact?treatment=${encodeURIComponent(t.name)}`}
-                      className="mt-4 text-sm font-medium text-brand-600 hover:text-brand-700"
-                    >
-                      Enquire about this →
-                    </Link>
-                  </div>
-                ))}
+          {Array.from(groups.entries()).map(([category, items]) => {
+            const CategoryIcon = getCategoryIcon(category);
+            return (
+              <div key={category}>
+                <div className="flex items-center gap-2">
+                  <CategoryIcon className="h-5 w-5 text-brand-500" aria-hidden />
+                  <h2 className="font-serif text-2xl text-brand-700">{category}</h2>
+                </div>
+                <div className="mt-6 grid gap-6 md:grid-cols-2">
+                  {items.map((t) => (
+                    <div key={t.id} className="flex flex-col rounded-2xl border border-brand-100 p-6">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                        <CategoryIcon className="h-5 w-5" aria-hidden />
+                      </div>
+                      <h3 className="mt-3 font-serif text-lg text-charcoal-900">{t.name}</h3>
+                      {t.description && <p className="mt-2 text-sm text-charcoal-700">{t.description}</p>}
+                      <p className="mt-3 text-xs text-charcoal-700">
+                        {t.durationMinutes} min · {t.numberOfSessions} session
+                        {t.numberOfSessions > 1 ? 's' : ''}
+                      </p>
+                      <Link
+                        href={`/contact?treatment=${encodeURIComponent(t.name)}`}
+                        className="mt-4 text-sm font-medium text-brand-600 hover:text-brand-700"
+                      >
+                        Enquire about this →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
