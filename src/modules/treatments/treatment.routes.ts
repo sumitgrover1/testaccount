@@ -16,6 +16,11 @@ const router = Router();
 
 const TREATMENT_MANAGERS = [...ADMIN_ROLES, Role.DOCTOR] as const;
 
+// Public, unauthenticated catalog listing consumed by the marketing website's
+// Services page. Registered before authenticate so it stays open; mounted
+// ahead of the /:id route below so it can never be shadowed by it.
+router.get('/public-list', treatmentController.listPublicTreatments);
+
 router.use(authenticate);
 
 router.post(

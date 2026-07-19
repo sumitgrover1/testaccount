@@ -14,6 +14,11 @@ export const createTreatment = asyncHandler(async (req: Request, res: Response) 
   res.status(201).json({ data: treatment });
 });
 
+export const listPublicTreatments = asyncHandler(async (_req: Request, res: Response) => {
+  const treatments = await treatmentService.listPublicTreatments();
+  res.status(200).json({ data: treatments });
+});
+
 export const getTreatment = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as unknown as IdParam;
   const treatment = await treatmentService.getTreatmentById(id);

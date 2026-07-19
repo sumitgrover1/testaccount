@@ -6,7 +6,7 @@ attribution, and reporting). Built with Node.js, Express, and TypeScript.
 Security- and compliance-minded by default — see [SECURITY.md](./SECURITY.md)
 for the full list of controls.
 
-A companion admin panel that consumes this API lives in [`frontend/`](./frontend/README.md) (Next.js + React + TypeScript).
+A companion admin panel that consumes this API lives in [`frontend/`](./frontend/README.md) (Next.js + React + TypeScript). A public marketing website (services, contact/booking form) lives in [`website/`](./website/README.md).
 
 ## Stack
 
@@ -156,6 +156,19 @@ in your shell or an `.env` file read by `docker compose` before starting.
   unified per-patient/per-lead communication timeline.
 - Every security- and business-relevant mutation is recorded in the
   append-only **AuditLog**.
+
+## Public (unauthenticated) endpoints
+
+Two endpoints intentionally sit outside the auth wall, for the public
+marketing website (`website/`) — everything else requires a staff login:
+
+- `GET /api/v1/treatments/public-list` — active treatments only, limited to
+  name/category/description/duration/sessions (no pricing — this clinic's
+  pricing is patient-specific, resolved after a consultation).
+- `POST /api/v1/leads/public-capture` — the website's contact/booking form.
+  Creates a `Lead` (source `WEBSITE_FORM`), rate-limited like other
+  public-facing endpoints. Add the website's origin to `CORS_ORIGIN` (see
+  `.env.example`) or the browser will block both calls.
 
 ## Integration points not wired to a live provider
 

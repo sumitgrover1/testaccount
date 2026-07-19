@@ -110,6 +110,25 @@ export async function updateTreatment(
   return updated;
 }
 
+// Public, unauthenticated catalog listing for the marketing website's
+// Services page. Deliberately excludes defaultPrice/isActive/timestamps —
+// this clinic's pricing is patient-specific (see pricing.service.ts) and
+// isn't disclosed pre-consultation; only active treatments are ever shown.
+export async function listPublicTreatments() {
+  return prisma.treatment.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      description: true,
+      durationMinutes: true,
+      numberOfSessions: true,
+    },
+    orderBy: [{ category: 'asc' }, { name: 'asc' }],
+  });
+}
+
 export async function getTreatmentPriceHistory(id: string) {
   const treatment = await prisma.treatment.findUnique({ where: { id }, select: { id: true } });
   if (!treatment) throw new NotFoundError('Treatment not found');
