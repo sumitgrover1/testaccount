@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { fetchPublicTreatments } from '@/lib/api';
+import { fetchPublicTreatments, fetchGoogleReviews, fetchInstagramGallery } from '@/lib/api';
 import { siteConfig, buildWhatsAppUrl } from '@/config/site';
 
 const highlights = [
@@ -27,9 +27,24 @@ const faqTeasers = [
   },
 ];
 
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="text-brand-500" aria-label={`${rating} out of 5 stars`}>
+      {'★'.repeat(Math.round(rating))}
+      <span className="text-brand-100">{'★'.repeat(5 - Math.round(rating))}</span>
+    </div>
+  );
+}
+
 export default async function HomePage() {
-  const treatments = await fetchPublicTreatments();
+  const [treatments, googleReviews, instagram] = await Promise.all([
+    fetchPublicTreatments(),
+    fetchGoogleReviews(),
+    fetchInstagramGallery(),
+  ]);
   const featured = treatments.slice(0, 3);
+  const featuredReviews = googleReviews.reviews.slice(0, 3);
+  const featuredPosts = instagram.posts.slice(0, 4);
 
   return (
     <div>
@@ -110,12 +125,101 @@ export default async function HomePage() {
         </section>
       )}
 
+      {featuredReviews.length > 0 && (
+        <section className="bg-cream-100 py-16">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="text-center">
+              <h2 className="font-serif text-3xl text-charcoal-900">What Our Patients Say</h2>
+              {googleReviews.rating && (
+                <p className="mt-2 flex items-center justify-center gap-2 text-charcoal-700">
+                  <Stars rating={googleReviews.rating} />
+                  <span className="text-sm">
+                    {googleReviews.rating.toFixed(1)} out of 5
+                    {googleReviews.totalReviews ? ` · ${googleReviews.totalReviews} Google reviews` : ''}
+                  </span>
+                </p>
+              )}
+            </div>
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {featuredReviews.map((r) => (
+                <div key={r.time} className="rounded-2xl bg-cream-50 p-6 shadow-sm">
+                  <Stars rating={r.rating} />
+                  <p className="mt-3 text-sm italic text-charcoal-700 line-clamp-4">&ldquo;{r.text}&rdquo;</p>
+                  <p className="mt-4 text-sm font-semibold text-brand-700">— {r.authorName}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link href="/testimonials" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                Read all reviews →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {featuredPosts.length > 0 && (
+        <section className="mx-auto max-w-6xl px-6 py-20">
+          <div className="flex items-end justify-between">
+            <h2 className="font-serif text-3xl text-charcoal-900">From Our Instagram</h2>
+            <a
+              href={siteConfig.instagramUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-sm font-medium text-brand-600 hover:text-brand-700"
+            >
+              Follow {siteConfig.instagramHandle} →
+            </a>
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+            {featuredPosts.map((post) => (
+              <a
+                key={post.id}
+                href={post.permalink}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="group relative block aspect-square overflow-hidden rounded-2xl bg-cream-200"
+              >
+                {/* Plain <img>, not next/image: Instagram's CDN hosts vary
+                    unpredictably, so a remotePatterns allowlist isn't a good fit here. */}
+                <img
+                  src={post.imageUrl}
+                  alt={post.caption ?? `${siteConfig.name} on Instagram`}
+                  className="h-full w-full object-cover transition group-hover:scale-105"
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="bg-cream-100 py-16">
+        <div className="mx-auto grid max-w-5xl items-center gap-10 px-6 md:grid-cols-2">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">About Us</p>
+            <h2 className="mt-3 font-serif text-3xl text-charcoal-900">{siteConfig.name}</h2>
+            <p className="mt-4 text-charcoal-700">{siteConfig.description}</p>
+            <Link href="/about" className="mt-6 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
+              Learn more about us →
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-cream-50 p-8 shadow-sm">
+            <h3 className="font-serif text-xl text-brand-700">Our Approach</h3>
+            <p className="mt-3 text-sm text-charcoal-700">
+              Every patient is assessed by a doctor before any treatment begins. Plans are tailored to
+              your skin, hair, and goals, and progress is tracked session by session.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16">
         <div className="mx-auto max-w-4xl px-6">
           <h2 className="text-center font-serif text-3xl text-charcoal-900">Common Questions</h2>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             {faqTeasers.map((f) => (
-              <div key={f.question} className="rounded-2xl bg-cream-50 p-6">
+              <div key={f.question} className="rounded-2xl bg-cream-100 p-6">
                 <h3 className="font-serif text-base text-brand-700">{f.question}</h3>
                 <p className="mt-2 text-sm text-charcoal-700">{f.answer}</p>
               </div>
