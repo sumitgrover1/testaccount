@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { fetchPublicTreatments, fetchGoogleReviews, fetchInstagramGallery } from '@/lib/api';
 import { siteConfig, buildWhatsAppUrl } from '@/config/site';
+import { getCategoryIcon } from '@/lib/categoryIcon';
+import { HeroVisual } from '@/components/HeroVisual';
 
 const highlights = [
   { title: 'Doctor-led care', copy: 'Every treatment plan is reviewed and overseen by our in-house doctors.' },
@@ -48,45 +50,53 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="mx-auto max-w-6xl px-6 py-20 text-center">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">
-          {siteConfig.tagline}
-        </p>
-        <h1 className="mt-4 font-serif text-4xl leading-tight text-charcoal-900 md:text-6xl">
-          Look and feel like the best version of you
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-charcoal-700">{siteConfig.description}</p>
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/contact"
-            className="rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white transition hover:bg-brand-700"
-          >
-            Book a Consultation
-          </Link>
-          <a
-            href={buildWhatsAppUrl("Hi, I'd like to book a consultation at Lumine Aesthetics.")}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="rounded-full bg-[#25D366] px-7 py-3 text-sm font-medium text-white transition hover:opacity-90"
-          >
-            Chat on WhatsApp
-          </a>
-          <Link
-            href="/services"
-            className="rounded-full border border-brand-300 px-7 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
-          >
-            Explore Treatments
-          </Link>
-        </div>
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <div className="grid items-center gap-12 md:grid-cols-2">
+          <div className="text-center md:text-left">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand-600">
+              {siteConfig.tagline}
+            </p>
+            <h1 className="mt-4 font-serif text-4xl leading-tight text-charcoal-900 md:text-6xl">
+              Look and feel like the best version of you
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-charcoal-700 md:mx-0">{siteConfig.description}</p>
+            <div className="mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
+              <Link
+                href="/contact"
+                className="rounded-full bg-brand-600 px-7 py-3 text-sm font-medium text-white transition hover:bg-brand-700"
+              >
+                Book a Consultation
+              </Link>
+              <a
+                href={buildWhatsAppUrl("Hi, I'd like to book a consultation at Lumine Aesthetics.")}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="rounded-full bg-[#25D366] px-7 py-3 text-sm font-medium text-white transition hover:opacity-90"
+              >
+                Chat on WhatsApp
+              </a>
+              <Link
+                href="/services"
+                className="rounded-full border border-brand-300 px-7 py-3 text-sm font-medium text-brand-700 transition hover:bg-brand-50"
+              >
+                Explore Treatments
+              </Link>
+            </div>
 
-        <ul className="mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-charcoal-700">
-          {trustBadges.map((badge) => (
-            <li key={badge} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-500" aria-hidden />
-              {badge}
-            </li>
-          ))}
-        </ul>
+            <ul className="mx-auto mt-12 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-charcoal-700 md:mx-0 md:justify-start">
+              {trustBadges.map((badge) => (
+                <li key={badge} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-500" aria-hidden />
+                  {badge}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="hidden md:block">
+            <HeroVisual />
+          </div>
+        </div>
       </section>
 
       <section className="bg-cream-100 py-16">
@@ -109,18 +119,24 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {featured.map((t) => (
-              <Link
-                key={t.id}
-                href={`/contact?treatment=${encodeURIComponent(t.name)}`}
-                className="rounded-2xl border border-brand-100 p-6 transition hover:border-brand-300 hover:shadow-sm"
-              >
-                <p className="text-xs font-medium uppercase tracking-wide text-brand-600">{t.category}</p>
-                <h3 className="mt-2 font-serif text-lg text-charcoal-900">{t.name}</h3>
-                {t.description && <p className="mt-2 text-sm text-charcoal-700 line-clamp-3">{t.description}</p>}
-                <p className="mt-3 text-sm font-medium text-brand-600">Enquire about this →</p>
-              </Link>
-            ))}
+            {featured.map((t) => {
+              const CategoryIcon = getCategoryIcon(t.category);
+              return (
+                <Link
+                  key={t.id}
+                  href={`/contact?treatment=${encodeURIComponent(t.name)}`}
+                  className="rounded-2xl border border-brand-100 p-6 transition hover:border-brand-300 hover:shadow-sm"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+                    <CategoryIcon className="h-5 w-5" aria-hidden />
+                  </div>
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-brand-600">{t.category}</p>
+                  <h3 className="mt-2 font-serif text-lg text-charcoal-900">{t.name}</h3>
+                  {t.description && <p className="mt-2 text-sm text-charcoal-700 line-clamp-3">{t.description}</p>}
+                  <p className="mt-3 text-sm font-medium text-brand-600">Enquire about this →</p>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

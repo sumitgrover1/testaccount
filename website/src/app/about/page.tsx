@@ -17,6 +17,21 @@ export default function AboutPage() {
         {siteConfig.description} We combine clinical expertise with a calm, welcoming environment —
         every plan starts with a real consultation, not a fixed menu.
       </p>
+
+      {/* Placeholder photo tiles — replace with real clinic interior/team
+          photos by dropping images into public/about/ and swapping these
+          divs for <img> tags, same pattern as the Gallery page. */}
+      <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {['Clinic Interior', 'Reception', 'Treatment Room', 'Our Team'].map((label) => (
+          <div
+            key={label}
+            className="flex aspect-square items-center justify-center rounded-2xl bg-cream-200 text-center text-sm text-charcoal-700"
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+
       <div className="mt-12 grid gap-8 md:grid-cols-2">
         <div className="rounded-2xl bg-cream-100 p-8">
           <h2 className="font-serif text-xl text-brand-700">Our Approach</h2>
