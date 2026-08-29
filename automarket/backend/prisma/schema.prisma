@@ -1,0 +1,671 @@
+// AutoMarket — vehicle marketplace data model.
+//
+// The platform spans four verticals that share one catalog:
+//   1. Discovery  — brands / models / variants / specs for cars, bikes, buses, tractors
+//   2. Pricing    — city-wise on-road price, released in exchange for a customer lead
+//   3. Finance    — lender offers, EMI + eligibility, loan applications
+//   4. Insurance  — insurer plans, IDV-based quotes, policy applications
+//
+// Every user-facing action in verticals 2-4 funnels into a single Lead table so
+// the sales desk works one queue regardless of which vertical produced it.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum VehicleType {
+  CAR
+  BIKE
+  BUS
+  TRACTOR
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  CNG
+  ELECTRIC
+  HYBRID
+  LPG
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+  AMT
+  CVT
+  DCT
+  IMT
+}
+
+enum ModelStatus {
+  NEW
+  UPCOMING
+  DISCONTINUED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  OPS_MANAGER
+  SALES_AGENT
+  CONTENT_EDITOR
+}
+
+enum LeadType {
+  ON_ROAD_PRICE
+  TEST_DRIVE
+  DEALER_CONTACT
+  CALLBACK
+  FINANCE
+  INSURANCE
+  NEWSLETTER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  DEALER_ASSIGNED
+  CONVERTED
+  LOST
+  DUPLICATE
+}
+
+enum LenderType {
+  BANK
+  NBFC
+  CAPTIVE
+}
+
+enum EmploymentType {
+  SALARIED
+  SELF_EMPLOYED
+  BUSINESS
+  FARMER
+  FLEET_OPERATOR
+}
+
+enum LoanApplicationStatus {
+  DRAFT
+  SUBMITTED
+  DOCS_PENDING
+  UNDER_REVIEW
+  APPROVED
+  DISBURSED
+  REJECTED
+}
+
+enum PolicyType {
+  COMPREHENSIVE
+  THIRD_PARTY
+  OWN_DAMAGE
+}
+
+enum InsuranceApplicationStatus {
+  QUOTED
+  DETAILS_PENDING
+  PAYMENT_PENDING
+  ISSUED
+  LOST
+}
+
+// ---------------------------------------------------------------------------
+// Back-office users
+// ---------------------------------------------------------------------------
+
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  fullName     String
+  role         AdminRole @default(SALES_AGENT)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignedLeads Lead[]         @relation("LeadOwner")
+  leadActivity  LeadActivity[]
+
+  @@index([role, isActive])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model Brand {
+  id          String      @id @default(uuid())
+  slug        String      @unique
+  name        String
+  vehicleType VehicleType
+  logoUrl     String?
+  country     String?
+  about       String?
+  isPopular   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  models VehicleModel[]
+
+  @@unique([vehicleType, name])
+  @@index([vehicleType, isPopular])
+}
+
+model VehicleModel {
+  id          String      @id @default(uuid())
+  slug        String
+  name        String
+  brandId     String
+  vehicleType VehicleType
+  status      ModelStatus @default(NEW)
+  bodyType    String? // Hatchback / SUV / Sports / Staff Bus / 4WD Tractor ...
+  segment     String?
+  description String?
+
+  // Denormalised range across the model's variants, kept in sync by the
+  // catalog service. Listing/filter queries read these instead of aggregating
+  // over variants on every request.
+  priceMin BigInt
+  priceMax BigInt
+
+  mileageKmpl     Float?
+  engineCc        Int?
+  powerBhp        Float?
+  seatingCapacity Int?
+  batteryKwh      Float? // EVs
+  rangeKm         Int? // EVs
+  ptoHp           Float? // tractors — power take-off
+  gvwKg           Int? // buses — gross vehicle weight
+
+  heroImageUrl String?
+  brochureUrl  String?
+  launchDate   DateTime?
+  rating       Float     @default(0)
+  reviewCount  Int       @default(0)
+  viewCount    Int       @default(0)
+  isPopular    Boolean   @default(false)
+
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand      Brand                @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  variants   Variant[]
+  images     ModelImage[]
+  highlights ModelHighlight[]
+  leads      Lead[]
+  loans      LoanApplication[]
+  policies   InsuranceApplication[]
+
+  @@unique([brandId, slug])
+  @@index([vehicleType, status])
+  @@index([vehicleType, isPopular])
+  @@index([priceMin, priceMax])
+}
+
+model Variant {
+  id      String @id @default(uuid())
+  slug    String
+  name    String
+  modelId String
+
+  exShowroomPrice BigInt
+  fuelType        FuelType
+  transmission    Transmission?
+  engineCc        Int?
+  powerBhp        Float?
+  torqueNm        Float?
+  mileageKmpl     Float?
+  seatingCapacity Int?
+  batteryKwh      Float?
+  rangeKm         Int?
+  isTopSelling    Boolean       @default(false)
+  isDiscontinued  Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  model    VehicleModel           @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  specs    VariantSpec[]
+  quotes   OnRoadQuote[]
+  leads    Lead[]
+  loans    LoanApplication[]
+  policies InsuranceApplication[]
+
+  @@unique([modelId, slug])
+  @@index([modelId, exShowroomPrice])
+}
+
+// Free-form spec sheet rows, grouped the way a spec table is rendered
+// ("Engine & Transmission", "Dimensions", "Safety", ...).
+model VariantSpec {
+  id        String @id @default(uuid())
+  variantId String
+  group     String
+  label     String
+  value     String
+  sortOrder Int    @default(0)
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, group, label])
+  @@index([variantId, sortOrder])
+}
+
+model ModelImage {
+  id        String  @id @default(uuid())
+  modelId   String
+  url       String
+  caption   String?
+  category  String  @default("EXTERIOR")
+  sortOrder Int     @default(0)
+
+  model VehicleModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId, sortOrder])
+}
+
+model ModelHighlight {
+  id        String  @id @default(uuid())
+  modelId   String
+  label     String
+  value     String
+  icon      String?
+  sortOrder Int     @default(0)
+
+  model VehicleModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId, sortOrder])
+}
+
+// ---------------------------------------------------------------------------
+// Geography + on-road pricing rules
+// ---------------------------------------------------------------------------
+
+model City {
+  id          String  @id @default(uuid())
+  slug        String  @unique
+  name        String
+  state       String
+  stateCode   String
+  isPopular   Boolean @default(false)
+  latitude    Float?
+  longitude   Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rtoRules  RtoRule[]
+  quotes    OnRoadQuote[]
+  leads     Lead[]
+  dealers   Dealer[]
+
+  @@index([state])
+  @@index([isPopular])
+}
+
+// One rule per (city, vehicle type, fuel type, ex-showroom price band). The
+// pricing engine picks the most specific matching rule; a rule with a null
+// fuelType acts as the band's fallback.
+model RtoRule {
+  id          String      @id @default(uuid())
+  cityId      String
+  vehicleType VehicleType
+  fuelType    FuelType?
+
+  priceBandMin BigInt @default(0)
+  priceBandMax BigInt // upper bound, exclusive
+
+  roadTaxPercent       Float
+  registrationFee      BigInt @default(0)
+  hypothecationFee     BigInt @default(0)
+  fastagFee            BigInt @default(0)
+  greenCess            BigInt @default(0)
+  handlingChargePercent Float @default(0)
+  handlingChargeCap    BigInt @default(0)
+  // Own-damage rate used for the mandatory first-year insurance line item in
+  // the on-road breakup. Insurance quotes in the insurance vertical use the
+  // insurer plan rates instead.
+  insuranceOdPercent   Float  @default(3)
+  tcsPercent           Float  @default(1) // 1% TCS above ₹10L ex-showroom
+
+  city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([cityId, vehicleType, priceBandMin])
+}
+
+// Third-party premium is regulated (IRDAI) and depends only on engine cc /
+// vehicle class, so it lives outside insurer plans.
+model ThirdPartyRate {
+  id          String      @id @default(uuid())
+  vehicleType VehicleType
+  ccMin       Int         @default(0)
+  ccMax       Int
+  annualPremium BigInt
+  label       String
+
+  @@unique([vehicleType, ccMin, ccMax])
+}
+
+model Dealer {
+  id          String      @id @default(uuid())
+  name        String
+  brandSlug   String
+  vehicleType VehicleType
+  cityId      String
+  address     String
+  phone       String
+  email       String?
+  isActive    Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+
+  city  City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  leads Lead[]
+
+  @@index([cityId, brandSlug])
+}
+
+// A computed on-road breakup. Persisted so the same quote can be re-opened
+// from a lead, an email or a shared link without re-deriving the numbers from
+// rules that may have changed since.
+model OnRoadQuote {
+  id        String @id @default(uuid())
+  variantId String
+  cityId    String
+
+  exShowroom      BigInt
+  rtoCharges      BigInt
+  roadTax         BigInt
+  insurance       BigInt
+  fastag          BigInt
+  handlingCharges BigInt
+  greenCess       BigInt
+  tcs             BigInt
+  otherCharges    BigInt
+  totalOnRoad     BigInt
+
+  breakup Json // full line-item list as rendered to the user
+  leadId  String?
+
+  createdAt DateTime @default(now())
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  city    City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  lead    Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([variantId, cityId])
+}
+
+// ---------------------------------------------------------------------------
+// Leads — the shared funnel for all four verticals
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id     String     @id @default(uuid())
+  type   LeadType
+  status LeadStatus @default(NEW)
+
+  fullName String
+  phone    String
+  email    String?
+  cityId   String?
+
+  vehicleType VehicleType?
+  modelId     String?
+  variantId   String?
+  dealerId    String?
+
+  source      String  @default("WEBSITE")
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  // Vertical-specific payload (loan tenure, policy expiry, preferred call slot).
+  // Kept as JSON so a new vertical does not need a schema migration to capture
+  // its own fields, while the columns above stay queryable for the sales desk.
+  metadata Json?
+
+  consentToContact Boolean   @default(true)
+  assignedToId     String?
+  lastContactedAt  DateTime?
+  closedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city         City?                  @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  model        VehicleModel?          @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  variant      Variant?               @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  dealer       Dealer?                @relation(fields: [dealerId], references: [id], onDelete: SetNull)
+  assignedTo   AdminUser?             @relation("LeadOwner", fields: [assignedToId], references: [id], onDelete: SetNull)
+  activities   LeadActivity[]
+  quotes       OnRoadQuote[]
+  loans        LoanApplication[]
+  policies     InsuranceApplication[]
+
+  @@index([type, status, createdAt])
+  @@index([phone])
+  @@index([assignedToId, status])
+}
+
+model LeadActivity {
+  id        String   @id @default(uuid())
+  leadId    String
+  actorId   String?
+  action    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  lead  Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actor AdminUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Finance vertical
+// ---------------------------------------------------------------------------
+
+model Lender {
+  id       String     @id @default(uuid())
+  slug     String     @unique
+  name     String
+  type     LenderType
+  logoUrl  String?
+  about    String?
+  isActive Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offers       LoanOffer[]
+  applications LoanApplication[]
+}
+
+// A lender's terms for one vehicle type. Rate/tenure/LTV drive both the offer
+// cards and the eligibility engine.
+model LoanOffer {
+  id          String      @id @default(uuid())
+  lenderId    String
+  vehicleType VehicleType
+
+  interestRateMin  Float
+  interestRateMax  Float
+  maxTenureMonths  Int
+  minTenureMonths  Int    @default(12)
+  maxLtvPercent    Float // share of ex-showroom (or on-road) financed
+  processingFeePercent Float @default(0.5)
+  processingFeeMin BigInt @default(0)
+  processingFeeMax BigInt @default(0)
+  minLoanAmount    BigInt
+  maxLoanAmount    BigInt
+  minMonthlyIncome BigInt
+  minCreditScore   Int    @default(700)
+  minAge           Int    @default(21)
+  maxAge           Int    @default(65)
+  employmentTypes  EmploymentType[]
+  approvalHours    Int    @default(48)
+  isFeatured       Boolean @default(false)
+
+  lender       Lender            @relation(fields: [lenderId], references: [id], onDelete: Cascade)
+  applications LoanApplication[]
+
+  @@unique([lenderId, vehicleType])
+  @@index([vehicleType, interestRateMin])
+}
+
+model LoanApplication {
+  id       String                @id @default(uuid())
+  leadId   String
+  offerId  String?
+  lenderId String?
+  status   LoanApplicationStatus @default(SUBMITTED)
+
+  vehicleType    VehicleType
+  modelId        String?
+  variantId      String?
+  vehiclePrice   BigInt
+  downPayment    BigInt
+  loanAmount     BigInt
+  tenureMonths   Int
+  interestRate   Float
+  emiAmount      BigInt
+  totalInterest  BigInt
+  totalPayable   BigInt
+
+  employmentType EmploymentType
+  monthlyIncome  BigInt
+  existingEmi    BigInt         @default(0)
+  creditScore    Int?
+  age            Int?
+  panLast4       String?
+
+  eligibilityScore Int?
+  rejectionReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead    Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  offer   LoanOffer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  lender  Lender?       @relation(fields: [lenderId], references: [id], onDelete: SetNull)
+  model   VehicleModel? @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  variant Variant?      @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Insurance vertical
+// ---------------------------------------------------------------------------
+
+model Insurer {
+  id                    String  @id @default(uuid())
+  slug                  String  @unique
+  name                  String
+  logoUrl               String?
+  claimSettlementRatio  Float
+  cashlessGarages       Int     @default(0)
+  about                 String?
+  isActive              Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plans        InsurancePlan[]
+  applications InsuranceApplication[]
+}
+
+model InsurancePlan {
+  id          String      @id @default(uuid())
+  insurerId   String
+  slug        String
+  name        String
+  vehicleType VehicleType
+  policyType  PolicyType
+
+  // Own-damage premium = IDV x odRatePercent, before depreciation/NCB.
+  odRatePercent      Float
+  zeroDepIncluded    Boolean @default(false)
+  roadsideAssistance Boolean @default(false)
+  engineProtect      Boolean @default(false)
+  personalAccidentCover BigInt @default(1500000)
+  keyBenefits        String[]
+  isFeatured         Boolean @default(false)
+  isActive           Boolean @default(true)
+
+  insurer      Insurer                @relation(fields: [insurerId], references: [id], onDelete: Cascade)
+  applications InsuranceApplication[]
+
+  @@unique([insurerId, slug])
+  @@index([vehicleType, policyType])
+}
+
+// Priced as a percentage of the own-damage premium, matching how motor add-ons
+// are actually loaded onto a policy.
+model InsuranceAddOn {
+  id          String      @id @default(uuid())
+  slug        String
+  name        String
+  description String
+  vehicleType VehicleType
+  ratePercent Float
+  sortOrder   Int         @default(0)
+
+  @@unique([vehicleType, slug])
+}
+
+model InsuranceApplication {
+  id        String                     @id @default(uuid())
+  leadId    String
+  insurerId String?
+  planId    String?
+  status    InsuranceApplicationStatus @default(QUOTED)
+
+  vehicleType     VehicleType
+  modelId         String?
+  variantId       String?
+  registrationNo  String?
+  registrationYear Int
+  engineCc        Int?
+  policyType      PolicyType
+  isNewVehicle    Boolean @default(false)
+  previousPolicyExpiry DateTime?
+  ncbPercent      Float   @default(0)
+  claimedLastYear Boolean @default(false)
+
+  idv             BigInt
+  odPremium       BigInt
+  tpPremium       BigInt
+  addOnPremium    BigInt
+  ncbDiscount     BigInt
+  netPremium      BigInt
+  gstAmount       BigInt
+  totalPremium    BigInt
+  selectedAddOns  String[]
+  breakup         Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead    Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  insurer Insurer?       @relation(fields: [insurerId], references: [id], onDelete: SetNull)
+  plan    InsurancePlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  model   VehicleModel?  @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  variant Variant?       @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+}
