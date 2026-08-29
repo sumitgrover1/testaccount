@@ -50,7 +50,6 @@
     "pino-http": "^10.3.0",
     "rate-limit-redis": "^4.2.0",
     "sanitize-html": "2.17.5",
-    "uuid": "^9.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
