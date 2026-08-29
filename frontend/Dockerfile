@@ -16,6 +16,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # backend URL (can't be changed later without rebuilding this image).
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# This app has no public/ folder (no static assets needed yet) — ensure the
+# path exists so the runtime stage's COPY below never fails, whether or not
+# one gets added later.
+RUN mkdir -p public
 RUN npm run build
 
 # --- runtime: minimal image, non-root user, only the standalone bundle ---
