@@ -18,7 +18,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-brand-100 bg-cream-50/90 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-serif text-xl tracking-wide text-brand-700">
-          <Image src="/logo.png" alt={siteConfig.name} width={36} height={36} className="rounded-full" priority />
+          <Image src="/logo.svg" alt={siteConfig.name} width={36} height={36} className="rounded-full" priority unoptimized />
           {siteConfig.name}
         </Link>
         <ul className="hidden gap-8 text-sm font-medium text-charcoal-700 md:flex">

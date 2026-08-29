@@ -8,7 +8,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt={siteConfig.name} width={32} height={32} className="rounded-full" />
+            <Image src="/logo.svg" alt={siteConfig.name} width={32} height={32} className="rounded-full" unoptimized />
             <p className="font-serif text-lg text-brand-700">{siteConfig.name}</p>
           </div>
           <p className="mt-2 text-sm text-charcoal-700">{siteConfig.tagline}</p>
