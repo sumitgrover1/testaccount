@@ -1,8 +1,9 @@
 services:
   app:
     build: .
-    ports:
-      - '3000:3000'
+    # No host port published — only Caddy (below) is reachable from outside
+    # the VPS; every app talks to every other app over the internal compose
+    # network by service name.
     environment:
       NODE_ENV: production
       PORT: 3000
@@ -11,13 +12,60 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set a real secret in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set a real secret in .env}
       COOKIE_SECRET: ${COOKIE_SECRET:?set a real secret in .env}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      CORS_ORIGIN: https://${WEBSITE_DOMAIN:?set your website domain in .env, e.g. yourdomain.com},https://${ADMIN_DOMAIN:?set your admin panel subdomain in .env, e.g. admin.yourdomain.com}
       TRUST_PROXY: 'true'
+      # Read by `docker compose exec app npm run prisma:seed` — see
+      # DEPLOYMENT_VPS.md. Not required for the app to start.
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@clinic.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMe123!Now}
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: unless-stopped
+
+  # Admin panel (frontend/) — Next.js, built in standalone mode.
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN:?set your backend API subdomain in .env, e.g. api.yourdomain.com}/api/v1
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # Public marketing website (website/) — Next.js, built in standalone mode.
+  website:
+    build:
+      context: ./website
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN:?set your backend API subdomain in .env, e.g. api.yourdomain.com}/api/v1
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # Reverse proxy + automatic HTTPS (Let's Encrypt) for all three domains —
+  # the only container exposed to the internet. Point each domain's DNS A
+  # record at this VPS's IP before starting; Caddy fetches/renews
+  # certificates on its own, no manual certbot setup needed.
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      WEBSITE_DOMAIN: ${WEBSITE_DOMAIN:?set your website domain in .env, e.g. yourdomain.com}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:?set your admin panel subdomain in .env, e.g. admin.yourdomain.com}
+      API_DOMAIN: ${API_DOMAIN:?set your backend API subdomain in .env, e.g. api.yourdomain.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - frontend
+      - website
     restart: unless-stopped
 
   mysql:
@@ -48,3 +96,5 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  caddy_data:
+  caddy_config:
