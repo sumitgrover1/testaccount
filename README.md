@@ -55,6 +55,7 @@ src/
     communications/       unified patient/lead communication timeline
     dashboard/            reporting/analytics endpoints
   routes/               route aggregation, health/readiness endpoints
+  scrapers/carwale/     standalone CarWale crawler (own CLI, no DB/env coupling)
 prisma/
   schema.prisma         full domain model (see "Domain model" below)
 tests/                  unit tests (validation schemas, crypto/password utils,
@@ -270,6 +271,27 @@ doesn't have:
 None of this blocks everyday clinic operations (patients, leads, treatments,
 pricing, enrollments, appointments, inventory, billing all work end-to-end
 today) — see [SECURITY.md](./SECURITY.md) for the full gap list.
+
+## Standalone tools
+
+### CarWale scraper
+
+`src/scrapers/carwale/` holds a self-contained crawler for carwale.com — new-car
+models and specs, used-car listings, dealers, reviews and news — written to
+JSONL or CSV. It shares this repository's toolchain (TypeScript, ESLint, Jest)
+but nothing else: it does not read `src/config/env.ts` and needs no database, so
+it runs with only a network connection.
+
+```bash
+npm run scrape -- --help
+npm run scrape -- url https://www.carwale.com/maruti-suzuki-cars/swift/
+npm run scrape -- crawl --sitemaps --max-pages 500 --out ./carwale-data
+```
+
+See [`src/scrapers/carwale/README.md`](src/scrapers/carwale/README.md) for the
+output schema, politeness defaults and how to re-point the CSS selectors when
+the site's markup changes. Read the "Before you run it" section there before
+pointing it at the live site.
 
 ## Extending this scaffold
 

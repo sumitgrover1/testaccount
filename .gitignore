@@ -25,3 +25,8 @@ prisma/*.db
 
 # Test artifacts
 .jest-cache/
+
+# CarWale scraper working files (see src/scrapers/carwale/README.md)
+carwale-data/
+.carwale-cache/
+.carwale-checkpoint.json
