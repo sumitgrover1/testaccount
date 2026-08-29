@@ -149,17 +149,22 @@ Safe to re-run — skips any post whose slug already exists.
 docker compose up --build
 ```
 
-Builds a multi-stage, non-root production image and starts it alongside MySQL
-and Redis. Set `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, and `COOKIE_SECRET`
-in your shell or an `.env` file read by `docker compose` before starting.
+For local dev, this builds a multi-stage, non-root production image of the
+backend and starts it alongside MySQL and Redis. Set `JWT_ACCESS_SECRET`,
+`JWT_REFRESH_SECRET`, and `COOKIE_SECRET` in your shell or an `.env` file
+read by `docker compose` before starting.
+
+The same `docker-compose.yml` also builds and runs the two Next.js apps
+(`frontend/`, `website/`) plus a Caddy reverse proxy with automatic HTTPS —
+see **[DEPLOYMENT_VPS.md](./DEPLOYMENT_VPS.md)** for the full production
+walkthrough (recommended: a small VPS, copy-paste commands, no Docker
+knowledge required).
 
 ### Deploying without Docker (shared/cPanel hosting)
 
-If your host doesn't support Docker — e.g. cPanel-based shared hosting
-plans like MilesWeb — see **[DEPLOYMENT.md](./DEPLOYMENT.md)** for a
-step-by-step guide using cPanel's Node.js Selector, including how to build
-the two Next.js apps in standalone mode so they run without a full
-`npm install` on the server.
+If your host doesn't support Docker at all — e.g. cPanel-based shared
+hosting plans like MilesWeb — see **[DEPLOYMENT.md](./DEPLOYMENT.md)** for
+a step-by-step guide using cPanel's Node.js Selector instead.
 
 ## Domain model
 
