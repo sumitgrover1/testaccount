@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: automarket
+    ports:
+      - '5432:5432'
+    volumes:
+      - automarket-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d automarket']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/automarket?schema=public
+      CORS_ORIGIN: http://localhost:3000
+      # Replace both before any deployment: openssl rand -base64 48
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+    ports:
+      - '4000:4000'
+
+  web:
+    build: ./web
+    depends_on:
+      - api
+    environment:
+      # Server-side rendering talks to the API over the compose network; the
+      # browser needs a URL it can reach from the host.
+      API_URL: http://api:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    ports:
+      - '3000:3000'
+
+volumes:
+  automarket-db:

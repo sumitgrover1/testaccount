@@ -1,4 +1,6 @@
 /* eslint-disable no-console */
+// The seed runs under tsx, not the Prisma CLI, so it loads .env itself.
+import 'dotenv/config';
 import {
   AdminRole,
   EmploymentType,
@@ -865,12 +867,15 @@ const LENDERS = [
   },
 ];
 
+// odFactor scales the base own-damage rate for each insurer, so the comparison
+// page shows the real trade-off buyers face: the insurer with the best claim
+// record is rarely the cheapest.
 const INSURERS = [
-  { slug: 'hdfc-ergo', name: 'HDFC ERGO', csr: 99.1, garages: 8300, about: 'One of the largest cashless garage networks in India, with 24x7 claim registration.' },
-  { slug: 'icici-lombard', name: 'ICICI Lombard', csr: 98.5, garages: 8800, about: 'InstaSpect video claim inspection settles most own-damage claims the same day.' },
-  { slug: 'bajaj-allianz', name: 'Bajaj Allianz', csr: 98.4, garages: 7200, about: 'Motor On The Spot app-based settlement for claims under one lakh rupees.' },
-  { slug: 'tata-aig', name: 'TATA AIG', csr: 98, garages: 7500, about: 'Auto Secure add-on range including zero depreciation, engine and key protect.' },
-  { slug: 'new-india-assurance', name: 'New India Assurance', csr: 97.5, garages: 3500, about: 'Public-sector insurer with the widest branch presence in tier-3 towns.' },
+  { slug: 'hdfc-ergo', name: 'HDFC ERGO', csr: 99.1, garages: 8300, odFactor: 1.08, about: 'One of the largest cashless garage networks in India, with 24x7 claim registration.' },
+  { slug: 'icici-lombard', name: 'ICICI Lombard', csr: 98.5, garages: 8800, odFactor: 1.03, about: 'InstaSpect video claim inspection settles most own-damage claims the same day.' },
+  { slug: 'bajaj-allianz', name: 'Bajaj Allianz', csr: 98.4, garages: 7200, odFactor: 0.97, about: 'Motor On The Spot app-based settlement for claims under one lakh rupees.' },
+  { slug: 'tata-aig', name: 'TATA AIG', csr: 98, garages: 7500, odFactor: 1, about: 'Auto Secure add-on range including zero depreciation, engine and key protect.' },
+  { slug: 'new-india-assurance', name: 'New India Assurance', csr: 97.5, garages: 3500, odFactor: 0.9, about: 'Public-sector insurer with the widest branch presence in tier-3 towns.' },
 ];
 
 const ADD_ONS = [
@@ -1125,7 +1130,7 @@ async function seedInsurance() {
           name,
           vehicleType: spec.vehicleType,
           policyType: spec.policyType,
-          odRatePercent: spec.odRate,
+          odRatePercent: Number((spec.odRate * insurer.odFactor).toFixed(3)),
           zeroDepIncluded: spec.zeroDep,
           roadsideAssistance: spec.policyType === 'COMPREHENSIVE',
           engineProtect: spec.zeroDep,
