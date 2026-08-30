@@ -20,6 +20,7 @@ export function issueCsrfCookie(res: Response): string {
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
+    domain: env.COOKIE_DOMAIN,
     // Mirrors the refresh cookie's lifetime (see auth.controller.ts) — this
     // cookie only exists to protect the refresh-token cookie, so it should
     // never outlive or fall short of it.
