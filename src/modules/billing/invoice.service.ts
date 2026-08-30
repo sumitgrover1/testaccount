@@ -2,6 +2,7 @@ import { InvoiceStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/AppError';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
+import { toPatientCode } from '../patients/patient.service';
 import { incrementCouponUsage, resolveCouponDiscount } from './coupon.service';
 import type {
   AddPaymentInput,
@@ -10,7 +11,36 @@ import type {
   ListInvoicesQuery,
 } from './invoice.validation';
 
-const WITH_RELATIONS = { items: true, payments: true, coupon: true } as const;
+const WITH_RELATIONS = {
+  items: true,
+  payments: true,
+  coupon: true,
+  patient: {
+    select: {
+      fullName: true,
+      patientNumber: true,
+      mobileNumber: true,
+      email: true,
+      address: true,
+      city: true,
+      state: true,
+      pincode: true,
+    },
+  },
+} as const;
+
+// patientCode (e.g. "PT-000123") is derived from patientNumber, not a stored
+// column — see patient.service.ts's toPatientCode, mirrored here since the
+// invoice response embeds a read-only patient summary rather than reusing
+// the patient module's own response shape.
+function withPatientCode<T extends { patient: { patientNumber: number } }>(
+  invoice: T,
+): T & { patient: T['patient'] & { patientCode: string } } {
+  return {
+    ...invoice,
+    patient: { ...invoice.patient, patientCode: toPatientCode(invoice.patient.patientNumber) },
+  };
+}
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -82,13 +112,13 @@ export async function createInvoice(input: CreateInvoiceInput, createdById: stri
     metadata: { totalAmount },
   });
 
-  return invoice;
+  return withPatientCode(invoice);
 }
 
 export async function getInvoiceById(id: string) {
   const invoice = await prisma.invoice.findUnique({ where: { id }, include: WITH_RELATIONS });
   if (!invoice) throw new NotFoundError('Invoice not found');
-  return invoice;
+  return withPatientCode(invoice);
 }
 
 export async function listInvoices(query: ListInvoicesQuery) {
@@ -109,7 +139,7 @@ export async function listInvoices(query: ListInvoicesQuery) {
   ]);
 
   return {
-    items,
+    items: items.map(withPatientCode),
     pagination: {
       page: query.page,
       limit: query.limit,

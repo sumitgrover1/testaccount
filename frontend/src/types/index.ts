@@ -291,10 +291,22 @@ export interface Payment {
   paidAt: string;
 }
 
+export interface InvoicePatientSummary {
+  fullName: string;
+  patientCode: string;
+  mobileNumber: string;
+  email?: string | null;
+  address?: string | null;
+  city: string;
+  state: string;
+  pincode?: string | null;
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: number;
   patientId: string;
+  patient: InvoicePatientSummary;
   status: InvoiceStatus;
   subtotal: string | number;
   discountAmount: string | number;

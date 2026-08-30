@@ -1,11 +1,13 @@
 'use client';
 
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { useFieldArray, useForm, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import * as patientsApi from '@/lib/api/patients';
 import * as treatmentsApi from '@/lib/api/treatments';
 import * as packagesApi from '@/lib/api/packages';
+import * as inventoryApi from '@/lib/api/inventory';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +18,7 @@ interface ItemFormValues {
   itemType: InvoiceItemType;
   treatmentId: string;
   packageId: string;
+  productBatchId: string;
   description: string;
   quantity: string;
   unitPrice: string;
@@ -41,6 +44,7 @@ const emptyItem: ItemFormValues = {
   itemType: 'TREATMENT',
   treatmentId: '',
   packageId: '',
+  productBatchId: '',
   description: '',
   quantity: '1',
   unitPrice: '',
@@ -48,12 +52,66 @@ const emptyItem: ItemFormValues = {
   gstPercent: '0',
 };
 
+// A product line needs a specific batch (FEFO stock tracking), so picking
+// one is a two-step cascade: product first, then one of its in-stock
+// batches. Kept as its own component (rather than inline in the row map)
+// since it needs its own product-selection state and batch query per row.
+function ProductBatchFields({
+  index,
+  register,
+  setValue,
+}: {
+  index: number;
+  register: UseFormRegister<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
+}) {
+  const [productId, setProductId] = useState('');
+  const { data: products } = useQuery({
+    queryKey: ['products', 'for-invoice'],
+    queryFn: () => inventoryApi.listProducts({ limit: 200, isActive: true }),
+  });
+  const { data: product } = useQuery({
+    queryKey: ['product', productId],
+    queryFn: () => inventoryApi.getProduct(productId),
+    enabled: Boolean(productId),
+  });
+
+  const batchOptions = (product?.batches ?? [])
+    .filter((b) => Number(b.currentStock) > 0)
+    .map((b) => ({
+      label: `${b.batchNumber} — ${Number(b.currentStock)} in stock (exp. ${new Date(b.expiryDate).toLocaleDateString('en-IN')})`,
+      value: b.id,
+    }));
+
+  return (
+    <>
+      <Select
+        label="Product"
+        placeholder="Select product"
+        options={(products?.data ?? []).map((p) => ({ label: p.name, value: p.id }))}
+        value={productId}
+        onChange={(e) => {
+          setProductId(e.target.value);
+          setValue(`items.${index}.productBatchId`, '');
+        }}
+      />
+      <Select
+        label="Batch"
+        placeholder={productId ? 'Select batch' : 'Select a product first'}
+        options={batchOptions}
+        disabled={!productId}
+        {...register(`items.${index}.productBatchId` as const)}
+      />
+    </>
+  );
+}
+
 export function InvoiceForm({ onSubmit, isSubmitting }: { onSubmit: (values: InvoiceFormOutput) => Promise<void>; isSubmitting: boolean }) {
   const { data: patients } = useQuery({ queryKey: ['patients', 'for-invoice'], queryFn: () => patientsApi.listPatients({ limit: 100 }) });
   const { data: treatments } = useQuery({ queryKey: ['treatments', 'for-invoice'], queryFn: () => treatmentsApi.listTreatments({ limit: 100 }) });
   const { data: packages } = useQuery({ queryKey: ['packages', 'for-invoice'], queryFn: () => packagesApi.listPackages({ limit: 100 }) });
 
-  const { register, control, handleSubmit, watch } = useForm<FormValues>({ defaultValues: { items: [emptyItem] } });
+  const { register, control, handleSubmit, watch, setValue } = useForm<FormValues>({ defaultValues: { items: [emptyItem] } });
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
   const submit = handleSubmit(async (values) => {
@@ -65,6 +123,7 @@ export function InvoiceForm({ onSubmit, isSubmitting }: { onSubmit: (values: Inv
         itemType: item.itemType,
         treatmentId: item.itemType === 'TREATMENT' ? item.treatmentId : undefined,
         packageId: item.itemType === 'PACKAGE' ? item.packageId : undefined,
+        productBatchId: item.itemType === 'PRODUCT' ? item.productBatchId : undefined,
         description: item.description,
         quantity: Number(item.quantity),
         unitPrice: Number(item.unitPrice),
@@ -114,6 +173,7 @@ export function InvoiceForm({ onSubmit, isSubmitting }: { onSubmit: (values: Inv
                   {...register(`items.${index}.packageId` as const)}
                 />
               )}
+              {itemType === 'PRODUCT' && <ProductBatchFields index={index} register={register} setValue={setValue} />}
               <Input label="Description" {...register(`items.${index}.description` as const, { required: true })} />
               <Input label="Qty" type="number" step="0.01" {...register(`items.${index}.quantity` as const)} />
               <Input label="Unit price (₹)" type="number" step="0.01" {...register(`items.${index}.unitPrice` as const, { required: true })} />
