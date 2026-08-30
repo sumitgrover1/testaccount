@@ -21,12 +21,9 @@ export const siteConfig = {
     latitude: 28.4211,
     longitude: 76.9635,
   },
-  // TODO: replace with the clinic's real phone number
-  phone: '+91-00000-00000',
-  phoneDisplay: '+91 00000 00000',
-  // TODO: replace with the clinic's real WhatsApp number, digits only with
-  // country code (no +, spaces, or dashes) — used to build wa.me links.
-  whatsappNumber: '910000000000',
+  phone: '+91-93198-35234',
+  phoneDisplay: '+91 93198 35234',
+  whatsappNumber: '919319835234',
   // TODO: replace with the clinic's real email address
   email: 'hello@lumineaesthetics.example',
   instagramUrl: 'https://www.instagram.com/lumine_aesthetics_/',
