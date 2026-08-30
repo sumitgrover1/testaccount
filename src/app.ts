@@ -22,7 +22,11 @@ export function createApp(): Express {
 
   // Required for correct client IP / protocol detection when behind a load
   // balancer or reverse proxy (affects rate limiting and secure-cookie logic).
-  app.set('trust proxy', env.TRUST_PROXY);
+  // Trusting exactly one hop (not `true`, which trusts an unlimited chain and
+  // lets a client spoof its own X-Forwarded-For to bypass IP-based rate
+  // limiting) — every documented deployment path here sits behind exactly
+  // one reverse proxy (Caddy, or Passenger/Apache on cPanel hosting).
+  app.set('trust proxy', env.TRUST_PROXY ? 1 : false);
   // Signals to clients/tooling that this is not an Express default config.
   app.disable('x-powered-by');
 
