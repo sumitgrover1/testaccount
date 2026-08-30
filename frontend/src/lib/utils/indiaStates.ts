@@ -1,42 +1,20 @@
-// India's 28 states + 8 union territories — a fixed list, safe to hardcode
-// (it changes only on rare, well-publicized administrative reorganizations).
-// Used as a dropdown so patient records can't drift into inconsistent
-// spellings ("Uttar Pradesh" vs "UP" vs "uttar pradesh").
-export const INDIA_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-  'Andaman and Nicobar Islands',
-  'Chandigarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi',
-  'Jammu and Kashmir',
-  'Ladakh',
-  'Lakshadweep',
-  'Puducherry',
-] as const;
+import { City, State } from 'country-state-city';
+
+// India's 28 states + 8 union territories, from a well-maintained public
+// dataset rather than a hand-typed list — used to drive proper State/City
+// dropdowns (instead of free text, which drifts into inconsistent spellings
+// like "Gurugram" vs "gurgaon" vs "Gurgaon,") everywhere a patient's address
+// is captured.
+const INDIA_STATE_RECORDS = State.getStatesOfCountry('IN');
+
+export const STATE_OPTIONS = INDIA_STATE_RECORDS.map((s) => ({ label: s.name, value: s.name }));
+
+const STATE_NAME_TO_ISO = new Map(INDIA_STATE_RECORDS.map((s) => [s.name, s.isoCode]));
+
+// City is a Select whose options depend on the selected state; call this
+// whenever the state field changes to get that state's valid cities.
+export function getCityOptions(stateName: string | undefined): { label: string; value: string }[] {
+  const isoCode = stateName ? STATE_NAME_TO_ISO.get(stateName) : undefined;
+  if (!isoCode) return [];
+  return City.getCitiesOfState('IN', isoCode).map((c) => ({ label: c.name, value: c.name }));
+}

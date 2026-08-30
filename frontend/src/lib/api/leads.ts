@@ -53,6 +53,7 @@ export interface ConvertLeadInput {
   age?: number;
   city: string;
   state: string;
+  pincode?: string;
 }
 
 export async function convertLead(id: string, input: ConvertLeadInput) {

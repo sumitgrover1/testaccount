@@ -10,11 +10,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { lookupPincode } from '@/lib/api/locations';
-import { INDIA_STATES } from '@/lib/utils/indiaStates';
+import { STATE_OPTIONS, getCityOptions } from '@/lib/utils/indiaStates';
 import type { Patient } from '@/types';
 import type { PatientInput } from '@/lib/api/patients';
-
-const STATE_OPTIONS = INDIA_STATES.map((s) => ({ label: s, value: s }));
 
 const schema = z
   .object({
@@ -120,6 +118,9 @@ export function PatientForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pincode]);
 
+  const selectedState = watch('state');
+  const cityOptions = getCityOptions(selectedState);
+
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -144,8 +145,15 @@ export function PatientForm({
           error={errors.pincode?.message}
           {...register('pincode')}
         />
-        <Input label="City" error={errors.city?.message} {...register('city')} />
         <Select label="State" error={errors.state?.message} options={STATE_OPTIONS} placeholder="Select state" {...register('state')} />
+        <Select
+          label="City"
+          error={errors.city?.message}
+          options={cityOptions}
+          placeholder={selectedState ? 'Select city' : 'Select a state first'}
+          disabled={!selectedState}
+          {...register('city')}
+        />
         <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
         <Input label="Occupation" {...register('occupation')} />
         <Input label="Referral source" {...register('referralSource')} />

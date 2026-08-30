@@ -68,6 +68,11 @@ export const convertLeadSchema = z
     age: z.coerce.number().int().min(0).max(150).optional(),
     city: z.string().trim().min(1).max(100),
     state: z.string().trim().min(1).max(100),
+    pincode: z
+      .string()
+      .trim()
+      .regex(/^[1-9][0-9]{5}$/, 'Invalid pincode')
+      .optional(),
   })
   .refine((data) => data.dateOfBirth !== undefined || data.age !== undefined, {
     message: 'Either dateOfBirth or age must be provided',
