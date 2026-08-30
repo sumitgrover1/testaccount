@@ -66,14 +66,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-brand-100 py-4 text-center text-xs text-charcoal-700">
-        <Link href="/faq" className="hover:text-brand-600">
-          FAQ
-        </Link>{' '}
-        ·{' '}
-        <Link href="/blog" className="hover:text-brand-600">
-          Blog
-        </Link>{' '}
-        · © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+        © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
       </div>
     </footer>
   );
