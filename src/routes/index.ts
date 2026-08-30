@@ -17,6 +17,7 @@ import dashboardRoutes from '../modules/dashboard/dashboard.routes';
 import reviewsRoutes from '../modules/reviews/reviews.routes';
 import galleryRoutes from '../modules/gallery/gallery.routes';
 import blogRoutes from '../modules/blog/blog.routes';
+import locationsRoutes from '../modules/locations/locations.routes';
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/reviews', reviewsRoutes);
 router.use('/gallery', galleryRoutes);
 router.use('/blog', blogRoutes);
+router.use('/locations', locationsRoutes);
 
 export default router;
