@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Printer } from 'lucide-react';
 import * as billingApi from '@/lib/api/billing';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -13,7 +14,8 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { getApiErrorMessage } from '@/lib/api/client';
-import { formatCurrency, formatDateTime } from '@/lib/utils/format';
+import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/format';
+import { CLINIC_INFO } from '@/lib/utils/clinicInfo';
 
 interface PaymentFormValues {
   amount: string;
@@ -62,10 +64,107 @@ export default function InvoiceDetailPage() {
       <PageHeader
         title={`Invoice #${invoice.invoiceNumber}`}
         description={formatDateTime(invoice.createdAt)}
-        action={<Badge status={invoice.status} />}
+        action={
+          <div className="flex items-center gap-3">
+            <Badge status={invoice.status} />
+            <Button variant="secondary" size="sm" onClick={() => window.print()}>
+              <Printer className="h-3.5 w-3.5" /> Print
+            </Button>
+          </div>
+        }
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Printable tax invoice — hidden on screen, shown only by window.print()
+          (see ProtectedShell's print: overrides for the sidebar/topbar/layout). */}
+      <div className="hidden print:block">
+        <div className="mb-6 flex items-start justify-between border-b border-slate-300 pb-4">
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-slate-900">{CLINIC_INFO.name}</h1>
+            <p className="text-sm text-slate-600">{CLINIC_INFO.addressLine1}</p>
+            <p className="text-sm text-slate-600">{CLINIC_INFO.addressLine2}</p>
+            <p className="text-sm text-slate-600">{CLINIC_INFO.phone}</p>
+          </div>
+          <div className="text-right">
+            <h2 className="text-lg font-semibold uppercase tracking-wide text-slate-900">Tax Invoice</h2>
+            <p className="text-sm text-slate-600">Invoice #{invoice.invoiceNumber}</p>
+            <p className="text-sm text-slate-600">{formatDate(invoice.createdAt)}</p>
+            <p className="text-sm font-medium text-slate-900">{invoice.status}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Billed to</p>
+          <p className="text-sm font-medium text-slate-900">{invoice.patient.fullName}</p>
+          <p className="text-sm text-slate-600">{invoice.patient.patientCode}</p>
+          <p className="text-sm text-slate-600">{invoice.patient.mobileNumber}</p>
+          {invoice.patient.email && <p className="text-sm text-slate-600">{invoice.patient.email}</p>}
+          {invoice.patient.address && <p className="text-sm text-slate-600">{invoice.patient.address}</p>}
+          <p className="text-sm text-slate-600">
+            {invoice.patient.city}, {invoice.patient.state}
+            {invoice.patient.pincode ? ` - ${invoice.patient.pincode}` : ''}
+          </p>
+        </div>
+
+        <table className="mb-6 w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-300 text-left">
+              <th className="py-2">Description</th>
+              <th className="py-2 text-right">Qty</th>
+              <th className="py-2 text-right">Unit price</th>
+              <th className="py-2 text-right">Discount %</th>
+              <th className="py-2 text-right">GST %</th>
+              <th className="py-2 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoice.items.map((item) => (
+              <tr key={item.id} className="border-b border-slate-100">
+                <td className="py-2">{item.description}</td>
+                <td className="py-2 text-right">{String(item.quantity)}</td>
+                <td className="py-2 text-right">{formatCurrency(item.unitPrice)}</td>
+                <td className="py-2 text-right">{String(item.discountPercent)}</td>
+                <td className="py-2 text-right">{String(item.gstPercent)}</td>
+                <td className="py-2 text-right">{formatCurrency(item.lineTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="ml-auto w-64 space-y-1 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-600">Subtotal</span>
+            <span>{formatCurrency(invoice.subtotal)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-600">Discount</span>
+            <span>-{formatCurrency(invoice.discountAmount)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-600">GST</span>
+            <span>+{formatCurrency(invoice.gstAmount)}</span>
+          </div>
+          <div className="flex justify-between border-t border-slate-300 pt-1 font-semibold">
+            <span>Total</span>
+            <span>{formatCurrency(invoice.totalAmount)}</span>
+          </div>
+          <div className="flex justify-between text-slate-600">
+            <span>Paid</span>
+            <span>{formatCurrency(invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0))}</span>
+          </div>
+          <div className="flex justify-between font-medium">
+            <span>Balance due</span>
+            <span>
+              {formatCurrency(
+                Number(invoice.totalAmount) - invoice.payments.reduce((sum, p) => sum + Number(p.amount), 0),
+              )}
+            </span>
+          </div>
+        </div>
+
+        <p className="mt-10 text-center text-xs text-slate-500">Thank you for choosing {CLINIC_INFO.name}.</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 print:hidden lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader title="Line items" />
