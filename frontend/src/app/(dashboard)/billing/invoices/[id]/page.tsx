@@ -61,18 +61,20 @@ export default function InvoiceDetailPage() {
 
   return (
     <div>
-      <PageHeader
-        title={`Invoice #${invoice.invoiceNumber}`}
-        description={formatDateTime(invoice.createdAt)}
-        action={
-          <div className="flex items-center gap-3">
-            <Badge status={invoice.status} />
-            <Button variant="secondary" size="sm" onClick={() => window.print()}>
-              <Printer className="h-3.5 w-3.5" /> Print
-            </Button>
-          </div>
-        }
-      />
+      <div className="print:hidden">
+        <PageHeader
+          title={`Invoice #${invoice.invoiceNumber}`}
+          description={formatDateTime(invoice.createdAt)}
+          action={
+            <div className="flex items-center gap-3">
+              <Badge status={invoice.status} />
+              <Button variant="secondary" size="sm" onClick={() => window.print()}>
+                <Printer className="h-3.5 w-3.5" /> Print
+              </Button>
+            </div>
+          }
+        />
+      </div>
 
       {/* Printable tax invoice — hidden on screen, shown only by window.print()
           (see ProtectedShell's print: overrides for the sidebar/topbar/layout). */}
