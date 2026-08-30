@@ -20,6 +20,14 @@ FROM node:20-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 
+# Alpine's base image ships libssl but not the `openssl` binary Prisma's
+# engine uses to detect the OpenSSL version at startup — without it,
+# detection fails and Prisma falls back to loading the wrong bundled engine
+# (openssl-1.1.x) even when the correct one (openssl-3.0.x, see
+# prisma/schema.prisma's binaryTargets) is also present, crash-looping the
+# container. Installing openssl fixes detection.
+RUN apk add --no-cache openssl
+
 # Run as an unprivileged, non-root user (defense in depth against container
 # breakout / arbitrary file write escalating to host-level compromise).
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
