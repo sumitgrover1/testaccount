@@ -36,6 +36,12 @@ COPY --from=build --chown=appuser:appgroup /app/node_modules ./node_modules
 COPY --from=build --chown=appuser:appgroup /app/dist ./dist
 COPY --from=build --chown=appuser:appgroup /app/prisma ./prisma
 COPY --from=build --chown=appuser:appgroup /app/package.json ./package.json
+# The seed scripts (prisma/seed.ts, seed-catalog.ts) import real application
+# code (e.g. password hashing, treatment/package services) straight from
+# src/ and run via tsx rather than the compiled dist/ output — so src/ needs
+# to be present for `docker compose exec app npm run prisma:seed` to work.
+COPY --from=build --chown=appuser:appgroup /app/src ./src
+COPY --from=build --chown=appuser:appgroup /app/tsconfig.json ./tsconfig.json
 
 USER appuser
 
