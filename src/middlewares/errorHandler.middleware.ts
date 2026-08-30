@@ -53,6 +53,11 @@ export function errorHandler(
     path: req.path,
     method: req.method,
     userId: req.user?.id,
+    // Server-side only (never sent to the client, unlike appError.details on
+    // the response body below) — e.g. which fields failed validation and
+    // why, needed to diagnose a report like "creating a user fails" without
+    // being able to reproduce it locally.
+    details: appError.details,
   };
 
   if (appError.statusCode >= 500 || !appError.isOperational) {
