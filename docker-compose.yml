@@ -24,6 +24,14 @@ services:
       # DEPLOYMENT_VPS.md. Not required for the app to start.
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@clinic.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMe123!Now}
+      # Optional integrations — setting a value in .env alone does nothing;
+      # Compose only forwards variables explicitly listed here into the
+      # container's actual process environment. All blank/unset by default.
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      GOOGLE_PLACE_ID: ${GOOGLE_PLACE_ID:-}
+      INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN:-}
+      MARKETING_WEBHOOK_SECRET_FACEBOOK: ${MARKETING_WEBHOOK_SECRET_FACEBOOK:-}
+      MARKETING_WEBHOOK_SECRET_GOOGLE: ${MARKETING_WEBHOOK_SECRET_GOOGLE:-}
     depends_on:
       mysql:
         condition: service_healthy
