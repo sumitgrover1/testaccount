@@ -19,7 +19,13 @@ if (redisClient) {
 }
 
 export async function connectRedis(): Promise<void> {
-  if (redisClient) {
+  // The rate limiter middleware (built at module-load time, before main()
+  // runs) can issue its first Redis command before this explicit connect
+  // call, which — since lazyConnect only defers the *initial* connect, not
+  // every subsequent one — auto-connects the client early. ioredis throws
+  // if .connect() is called again while already connecting/connected, so
+  // only call it from the client's genuine pre-connect state.
+  if (redisClient && redisClient.status === 'wait') {
     await redisClient.connect();
   }
 }
