@@ -14,6 +14,12 @@ services:
       COOKIE_SECRET: ${COOKIE_SECRET:?set a real secret in .env}
       CORS_ORIGIN: https://${WEBSITE_DOMAIN:?set your website domain in .env, e.g. yourdomain.com},https://${ADMIN_DOMAIN:?set your admin panel subdomain in .env, e.g. admin.yourdomain.com}
       TRUST_PROXY: 'true'
+      # The admin panel/website live on different subdomains than the API
+      # (admin.X, X, api.X) — without a shared cookie domain, auth cookies
+      # are host-only to the API's exact hostname, and JS on a sibling
+      # subdomain can never read the CSRF cookie. Sharing across all
+      # subdomains of WEBSITE_DOMAIN fixes that.
+      COOKIE_DOMAIN: .${WEBSITE_DOMAIN}
       # Read by `docker compose exec app npm run prisma:seed` — see
       # DEPLOYMENT_VPS.md. Not required for the app to start.
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@clinic.local}

@@ -25,6 +25,7 @@ function setRefreshCookie(res: Response, token: string): void {
     secure: env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: REFRESH_COOKIE_PATH,
+    domain: env.COOKIE_DOMAIN,
     // Without an explicit maxAge this would default to a session cookie
     // (cleared when the browser closes), which would silently cut every
     // session down to "until you close the tab" regardless of the refresh
@@ -34,7 +35,7 @@ function setRefreshCookie(res: Response, token: string): void {
 }
 
 function clearRefreshCookie(res: Response): void {
-  res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+  res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH, domain: env.COOKIE_DOMAIN });
 }
 
 export const login = asyncHandler(async (req: Request, res: Response) => {

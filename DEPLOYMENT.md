@@ -73,6 +73,11 @@ this same cPanel page (not a committed `.env` file). Key production values:
 - `TRUST_PROXY` — `true` (Passenger/Apache sits in front of your app)
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET` — generate with
   `openssl rand -hex 64` each, never reuse the `.env.example` placeholders
+- `COOKIE_DOMAIN` — `.yourdomain.com` (leading dot, your real domain). The
+  admin panel and website sit on different subdomains than the API here —
+  without this, auth cookies are scoped only to `api.yourdomain.com`, so the
+  admin panel's JS can never read the CSRF cookie, and every login refresh
+  and every save silently fails.
 - `REDIS_URL` — leave **blank** (see "Redis" below)
 - `NODE_ENV` — `production`
 - Everything else (Google Places, Instagram, marketing webhooks) — optional,

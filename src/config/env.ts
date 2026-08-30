@@ -24,6 +24,13 @@ const envSchema = z.object({
   JWT_AUDIENCE: z.string().default('clinic-clients'),
 
   COOKIE_SECRET: z.string().min(32, 'COOKIE_SECRET must be at least 32 characters'),
+  // Set this (e.g. ".yourdomain.com") when the admin panel and website live
+  // on different subdomains than the API — without it, auth cookies are
+  // host-only (scoped to the API's exact hostname), so JS running on a
+  // sibling subdomain can never read the CSRF cookie, breaking every
+  // refresh/logout/mutating request. Leave unset for same-host deployments
+  // (e.g. local dev, where everything is on localhost).
+  COOKIE_DOMAIN: z.string().optional(),
 
   ACCOUNT_LOCKOUT_THRESHOLD: z.coerce.number().int().positive().default(5),
   ACCOUNT_LOCKOUT_DURATION_MINUTES: z.coerce.number().int().positive().default(15),
