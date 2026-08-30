@@ -86,6 +86,7 @@ export interface Patient {
   age: number | null;
   city: string;
   state: string;
+  pincode?: string | null;
   status: PatientStatus;
   email?: string | null;
   address?: string | null;

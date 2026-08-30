@@ -9,6 +9,7 @@ export interface PatientInput {
   age?: number;
   city: string;
   state: string;
+  pincode?: string;
   email?: string;
   address?: string;
   occupation?: string;

@@ -223,6 +223,7 @@ export async function convertLead(id: string, input: ConvertLeadInput, actingUse
         age: input.age,
         city: input.city,
         state: input.state,
+        pincode: input.pincode,
         referralSource: lead.source,
         createdById: actingUserId,
       },

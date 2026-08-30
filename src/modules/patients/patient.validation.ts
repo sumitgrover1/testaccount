@@ -12,6 +12,12 @@ export type IdParam = z.infer<typeof idParamSchema>;
 
 const textField = (max: number) => z.string().trim().min(1).max(max);
 
+const pincodeField = z
+  .string()
+  .trim()
+  .regex(/^[1-9][0-9]{5}$/, 'Invalid pincode')
+  .optional();
+
 const medicalInfoFields = {
   allergies: z.string().trim().max(2000).optional(),
   existingDiseases: z.string().trim().max(2000).optional(),
@@ -36,6 +42,7 @@ export const createPatientSchema = z
     age: z.coerce.number().int().min(0).max(150).optional(),
     city: textField(100),
     state: textField(100),
+    pincode: pincodeField,
     ...optionalFields,
     ...medicalInfoFields,
   })
@@ -54,6 +61,7 @@ export const updatePatientSchema = z
     age: z.coerce.number().int().min(0).max(150).optional(),
     city: textField(100).optional(),
     state: textField(100).optional(),
+    pincode: pincodeField,
     status: z.nativeEnum(PatientStatus).optional(),
     ...optionalFields,
     ...medicalInfoFields,

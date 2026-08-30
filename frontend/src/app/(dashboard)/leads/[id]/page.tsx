@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import * as leadsApi from '@/lib/api/leads';
 import * as communicationsApi from '@/lib/api/communications';
+import { lookupPincode } from '@/lib/api/locations';
+import { STATE_OPTIONS, getCityOptions } from '@/lib/utils/indiaStates';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -25,6 +27,11 @@ const convertSchema = z
     gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
     dateOfBirth: z.string().optional(),
     age: z.coerce.number().optional(),
+    pincode: z
+      .string()
+      .regex(/^[1-9][0-9]{5}$/, 'Must be a 6-digit pincode')
+      .optional()
+      .or(z.literal('')),
     city: z.string().min(1, 'Required'),
     state: z.string().min(1, 'Required'),
   })
@@ -71,8 +78,37 @@ export default function LeadDetailPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ConvertValues>({ resolver: zodResolver(convertSchema), defaultValues: { gender: 'MALE' } });
+
+  const pincode = watch('pincode');
+  const lookupTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    clearTimeout(lookupTimer.current);
+    if (!pincode || !/^[1-9][0-9]{5}$/.test(pincode)) return;
+
+    lookupTimer.current = setTimeout(() => {
+      lookupPincode(pincode)
+        .then((result) => {
+          if (result.valid) {
+            if (result.city) setValue('city', result.city, { shouldValidate: true });
+            if (result.state) setValue('state', result.state, { shouldValidate: true });
+          } else {
+            showError("Couldn't find that pincode — enter city/state manually");
+          }
+        })
+        .catch(() => showError('Pincode lookup failed — enter city/state manually'));
+    }, 400);
+
+    return () => clearTimeout(lookupTimer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pincode]);
+
+  const selectedState = watch('state');
+  const cityOptions = getCityOptions(selectedState);
 
   if (!lead) return null;
 
@@ -136,7 +172,9 @@ export default function LeadDetailPage() {
 
       <Modal open={convertOpen} onClose={() => setConvertOpen(false)} title="Convert lead to patient">
         <form
-          onSubmit={handleSubmit((values) => convertMutation.mutate(values))}
+          onSubmit={handleSubmit((values) =>
+            convertMutation.mutate({ ...values, pincode: values.pincode || undefined }),
+          )}
           className="space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
@@ -152,8 +190,22 @@ export default function LeadDetailPage() {
             />
             <Input label="Date of birth" type="date" error={errors.dateOfBirth?.message} {...register('dateOfBirth')} />
             <Input label="Age (if DOB unknown)" type="number" {...register('age')} />
-            <Input label="City" error={errors.city?.message} {...register('city')} />
-            <Input label="State" error={errors.state?.message} {...register('state')} />
+            <Input
+              label="Pincode"
+              placeholder="e.g. 122001"
+              maxLength={6}
+              error={errors.pincode?.message}
+              {...register('pincode')}
+            />
+            <Select label="State" error={errors.state?.message} options={STATE_OPTIONS} placeholder="Select state" {...register('state')} />
+            <Select
+              label="City"
+              error={errors.city?.message}
+              options={cityOptions}
+              placeholder={selectedState ? 'Select city' : 'Select a state first'}
+              disabled={!selectedState}
+              {...register('city')}
+            />
           </div>
           <div className="flex justify-end">
             <Button type="submit" isLoading={convertMutation.isPending}>
