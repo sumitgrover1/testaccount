@@ -3,10 +3,15 @@ import Link from 'next/link';
 import { fetchGoogleReviews } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 
+const title = 'Testimonials';
+const description = `Real patient testimonials and Google reviews for ${siteConfig.name}, a skin and hair clinic in ${siteConfig.city}.`;
+
 export const metadata: Metadata = {
-  title: 'Testimonials',
-  description: `What patients say about ${siteConfig.name}.`,
+  title,
+  description,
   alternates: { canonical: '/testimonials' },
+  openGraph: { title, description, url: '/testimonials' },
+  twitter: { title, description },
 };
 
 // Placeholder testimonials — shown only until real Google reviews are

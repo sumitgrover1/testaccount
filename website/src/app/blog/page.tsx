@@ -5,10 +5,15 @@ import { siteConfig } from '@/config/site';
 import { CategoryIconBadge, formatCategoryLabel } from '@/lib/categoryIcon';
 import { BlogCover } from '@/components/BlogCover';
 
+const title = 'Skin, Hair & Weight Management Blog';
+const description = `Educational articles on skin care, hair care, and weight management from the ${siteConfig.name} team.`;
+
 export const metadata: Metadata = {
-  title: 'Skin, Hair & Weight Management Blog',
-  description: `Educational articles on skin care, hair care, and weight management from the ${siteConfig.name} team.`,
+  title,
+  description,
   alternates: { canonical: '/blog' },
+  openGraph: { title, description, url: '/blog' },
+  twitter: { title, description },
 };
 
 const CATEGORIES = ['SKIN', 'HAIR', 'WEIGHT_MANAGEMENT', 'GENERAL'];

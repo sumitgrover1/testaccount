@@ -2,10 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 
+const title = 'About Us';
+const description = `Learn about ${siteConfig.name}'s doctor-led approach to skin and hair care in ${siteConfig.city}.`;
+
 export const metadata: Metadata = {
-  title: 'About Us',
-  description: `Learn about ${siteConfig.name}'s doctor-led approach to skin and hair care in ${siteConfig.city}.`,
+  title,
+  description,
   alternates: { canonical: '/about' },
+  openGraph: { title, description, url: '/about' },
+  twitter: { title, description },
 };
 
 export default function AboutPage() {

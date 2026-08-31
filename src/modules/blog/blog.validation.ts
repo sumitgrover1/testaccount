@@ -65,12 +65,13 @@ export const listBlogPostsQuerySchema = paginationSchema.extend({
 export type ListBlogPostsQuery = z.infer<typeof listBlogPostsQuerySchema>;
 
 // Public listing defaults to 10 per page (rather than paginationSchema's
-// general-purpose default) and caps at 100 — the website's blog index is
+// general-purpose default) and caps at 500 — the website's blog index is
 // paged, and its build-time sitemap fetch just asks for a high enough limit
-// to get everything in one page.
+// to get every published post in one page (currently ~92 across both seed
+// scripts), so the cap needs real headroom above the current article count.
 export const publicListBlogPostsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(10),
+  limit: z.coerce.number().int().positive().max(500).default(10),
   category: z.nativeEnum(BlogCategory).optional(),
   tag: z.string().trim().max(60).optional(),
 });
