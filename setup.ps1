@@ -6,9 +6,9 @@
 
   It generates real secrets, writes all three .env files, installs
   dependencies, runs Prisma migrations + the admin seed script + a starter
-  treatment/package catalog seed + a starter blog article seed, and opens
-  each app's dev server in its own window. Safe to re-run — it never
-  overwrites an .env file that already exists.
+  treatment/package catalog seed + starter blog article seeds (general +
+  skin-focused), and opens each app's dev server in its own window. Safe
+  to re-run — it never overwrites an .env file that already exists.
 
   Only edit the -DbUser / -DbPassword / -DbHost / -DbPort parameters below
   (or pass them on the command line) if your MySQL isn't the default
@@ -42,7 +42,7 @@ function Write-EnvFile($Path, $Content) {
   Write-Host "  Wrote $Path" -ForegroundColor Green
 }
 
-Write-Host "`n=== 1/7: Writing .env files ===" -ForegroundColor Cyan
+Write-Host "`n=== 1/8: Writing .env files ===" -ForegroundColor Cyan
 
 $databaseUrl = "mysql://${DbUser}:${DbPassword}@${DbHost}:${DbPort}/${DbName}"
 $accessSecret = New-Secret
@@ -95,7 +95,7 @@ Write-EnvFile "$RepoRoot\frontend\.env.local" $frontendEnv
 $websiteEnv = "NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1`n"
 Write-EnvFile "$RepoRoot\website\.env.local" $websiteEnv
 
-Write-Host "`n=== 2/7: Installing dependencies (backend, frontend, website) ===" -ForegroundColor Cyan
+Write-Host "`n=== 2/8: Installing dependencies (backend, frontend, website) ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npm install
 Pop-Location
@@ -108,27 +108,32 @@ Push-Location "$RepoRoot\website"
 npm install
 Pop-Location
 
-Write-Host "`n=== 3/7: Running Prisma migrations ===" -ForegroundColor Cyan
+Write-Host "`n=== 3/8: Running Prisma migrations ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npx prisma migrate dev --name init
 Pop-Location
 
-Write-Host "`n=== 4/7: Seeding first Super Admin account ===" -ForegroundColor Cyan
+Write-Host "`n=== 4/8: Seeding first Super Admin account ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npm run prisma:seed
 Pop-Location
 
-Write-Host "`n=== 5/7: Seeding treatment + package catalog ===" -ForegroundColor Cyan
+Write-Host "`n=== 5/8: Seeding treatment + package catalog ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npm run prisma:seed:catalog
 Pop-Location
 
-Write-Host "`n=== 6/7: Seeding starter blog articles ===" -ForegroundColor Cyan
+Write-Host "`n=== 6/8: Seeding starter blog articles ===" -ForegroundColor Cyan
 Push-Location $RepoRoot
 npm run prisma:seed:blog
 Pop-Location
 
-Write-Host "`n=== 7/7: Launching dev servers in new windows ===" -ForegroundColor Cyan
+Write-Host "`n=== 7/8: Seeding skin-focused blog articles ===" -ForegroundColor Cyan
+Push-Location $RepoRoot
+npm run prisma:seed:blog:skin
+Pop-Location
+
+Write-Host "`n=== 8/8: Launching dev servers in new windows ===" -ForegroundColor Cyan
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot'; npm run dev"
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot\frontend'; npm run dev"
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "cd '$RepoRoot\website'; npm run dev"

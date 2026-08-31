@@ -26,6 +26,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:seed:catalog": "tsx prisma/seed-catalog.ts",
     "prisma:seed:blog": "tsx prisma/seed-blog.ts",
+    "prisma:seed:blog:skin": "tsx prisma/seed-blog-skin.ts",
     "audit": "npm audit --audit-level=moderate",
     "prepare": "husky"
   },
