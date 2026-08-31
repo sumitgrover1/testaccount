@@ -130,6 +130,17 @@ npm run prisma:seed:blog
 
 Safe to re-run — skips any post whose slug already exists.
 
+Optionally, seed 50 additional Skin-category blog articles spread across
+sub-topics (Acne, Anti-Aging, Pigmentation, Sun Protection, Sensitive Skin,
+Advanced Treatments, Daily Routine, Seasonal & Lifestyle — tracked as blog
+tags), attributed to the first Super Admin found:
+
+```bash
+npm run prisma:seed:blog:skin
+```
+
+Safe to re-run — skips any post whose slug already exists.
+
 ### Scripts
 
 | Command | Purpose |
