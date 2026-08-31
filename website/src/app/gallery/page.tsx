@@ -3,10 +3,15 @@ import Link from 'next/link';
 import { fetchInstagramGallery } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 
+const title = 'Gallery';
+const description = `Before/after results and clinic photos from ${siteConfig.name}.`;
+
 export const metadata: Metadata = {
-  title: 'Gallery',
-  description: `Before/after results and clinic photos from ${siteConfig.name}.`,
+  title,
+  description,
   alternates: { canonical: '/gallery' },
+  openGraph: { title, description, url: '/gallery' },
+  twitter: { title, description },
 };
 
 // Placeholder tiles — shown only until INSTAGRAM_ACCESS_TOKEN is configured

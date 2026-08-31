@@ -4,9 +4,15 @@ import { JsonLd } from '@/components/JsonLd';
 import { faqPageSchema } from '@/lib/structuredData';
 import { siteConfig } from '@/config/site';
 
+const title = 'Frequently Asked Questions';
+const description = `Common questions about consultations, sessions, safety, and pricing at ${siteConfig.name}.`;
+
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions',
-  description: `Common questions about consultations, sessions, safety, and pricing at ${siteConfig.name}.`,
+  title,
+  description,
+  alternates: { canonical: '/faq' },
+  openGraph: { title, description, url: '/faq' },
+  twitter: { title, description },
 };
 
 const faqs = [

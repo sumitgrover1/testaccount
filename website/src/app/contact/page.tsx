@@ -3,10 +3,15 @@ import { Suspense } from 'react';
 import { siteConfig, buildWhatsAppUrl } from '@/config/site';
 import { EnquiryForm } from '@/components/EnquiryForm';
 
+const title = 'Contact & Book an Appointment';
+const description = `Book a skin or hair consultation at ${siteConfig.name} in ${siteConfig.city} — call, WhatsApp, or request a callback online.`;
+
 export const metadata: Metadata = {
-  title: 'Contact & Book an Appointment',
-  description: `Book a skin or hair consultation at ${siteConfig.name} in ${siteConfig.city} — call, WhatsApp, or request a callback online.`,
+  title,
+  description,
   alternates: { canonical: '/contact' },
+  openGraph: { title, description, url: '/contact' },
+  twitter: { title, description },
 };
 
 export default function ContactPage() {

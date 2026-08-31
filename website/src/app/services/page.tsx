@@ -4,10 +4,15 @@ import { fetchPublicTreatments, type PublicTreatment } from '@/lib/api';
 import { siteConfig } from '@/config/site';
 import { CategoryIconBadge } from '@/lib/categoryIcon';
 
+const title = 'Skin & Hair Treatments';
+const description = `Explore our skin, hair, and aesthetic treatments at ${siteConfig.name} in ${siteConfig.city}. Personalized pricing after a consultation.`;
+
 export const metadata: Metadata = {
-  title: 'Skin & Hair Treatments',
-  description: `Explore our skin, hair, and aesthetic treatments at ${siteConfig.name} in ${siteConfig.city}. Personalized pricing after a consultation.`,
+  title,
+  description,
   alternates: { canonical: '/services' },
+  openGraph: { title, description, url: '/services' },
+  twitter: { title, description },
 };
 
 function groupByCategory(treatments: PublicTreatment[]) {

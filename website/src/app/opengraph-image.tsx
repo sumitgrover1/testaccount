@@ -1,13 +1,16 @@
 import { ImageResponse } from 'next/og';
 import { siteConfig } from '@/config/site';
 
+// Site-wide default social-share card (og:image / twitter:image), rendered
+// at request time rather than a photograph — there are no real clinic
+// photos wired up yet (see the Gallery page's placeholder tiles), and this
+// keeps the card on-brand and copyright-free, matching the code-generated
+// approach used for blog cover images. Any route can override this by
+// adding its own opengraph-image.tsx; nothing else needs to change.
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-// Dynamically generated social-share card (Facebook/WhatsApp/Twitter link
-// previews) — no photography needed, and updates automatically if the
-// clinic name/tagline in site.ts ever changes.
-export default function OpengraphImage() {
+export default async function Image() {
   return new ImageResponse(
     (
       <div
@@ -18,21 +21,36 @@ export default function OpengraphImage() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #fdf2f4 0%, #f5c6cf 100%)',
+          background: 'linear-gradient(135deg, #5a3fa8 0%, #4b3494 45%, #281b52 100%)',
+          color: '#fdfbf7',
+          fontFamily: 'sans-serif',
         }}
       >
         <div
           style={{
-            fontSize: 88,
-            fontWeight: 600,
-            color: '#87344a',
-            fontFamily: 'Georgia, serif',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 120,
+            height: 120,
+            borderRadius: 60,
+            background: 'rgba(253, 251, 247, 0.15)',
+            fontSize: 56,
+            fontWeight: 700,
+            marginBottom: 36,
           }}
         >
-          {siteConfig.name}
+          <span>L</span>
         </div>
-        <div style={{ fontSize: 36, color: '#6b2a3c', marginTop: 20 }}>{siteConfig.tagline}</div>
-        <div style={{ fontSize: 24, color: '#a8435a', marginTop: 40 }}>{siteConfig.city}</div>
+        <div style={{ display: 'flex', fontSize: 64, fontWeight: 700, letterSpacing: -1 }}>
+          <span>{siteConfig.name}</span>
+        </div>
+        <div style={{ display: 'flex', marginTop: 16, fontSize: 32, color: '#d3cbf0' }}>
+          <span>{siteConfig.tagline}</span>
+        </div>
+        <div style={{ display: 'flex', marginTop: 28, fontSize: 24, color: '#b3a3e3' }}>
+          <span>{siteConfig.city}, India</span>
+        </div>
       </div>
     ),
     { ...size },

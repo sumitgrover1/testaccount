@@ -13,9 +13,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // The public blog listing is paged, but the sitemap needs every slug — the
-  // backend's public-list endpoint caps a single page at 100, comfortably
+  // backend's public-list endpoint caps a single page at 500, comfortably
   // above the current article count.
-  const { data: posts } = await fetchBlogPosts({ limit: 100 });
+  const { data: posts } = await fetchBlogPosts({ limit: 500 });
   const blogEntries: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteConfig.url}/blog/${post.slug}`,
     lastModified: new Date(post.publishedAt),
