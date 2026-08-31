@@ -6,9 +6,7 @@ export const siteConfig = {
   description:
     'Lumine Aesthetics is a cosmetology, skin, and hair treatment clinic in Gurugram offering personalized, doctor-led skin and hair care — book a consultation today.',
   city: 'Gurugram',
-  // TODO: replace with the production domain once you have one — used for
-  // canonical URLs, sitemap.xml, and Open Graph image resolution.
-  url: 'https://www.lumineaesthetics.example',
+  url: 'https://luminehealthcare.in',
   address: {
     line1: 'First Floor, Pyramid Complex, Pyramid Urban Homes 2',
     line2: 'Sector 86, Pataudi Road, Gurugram, Haryana 122012',
@@ -24,8 +22,7 @@ export const siteConfig = {
   phone: '+91-93198-35234',
   phoneDisplay: '+91 93198 35234',
   whatsappNumber: '919319835234',
-  // TODO: replace with the clinic's real email address
-  email: 'hello@lumineaesthetics.example',
+  email: 'contact@luminehealthcare.in',
   instagramUrl: 'https://www.instagram.com/lumine_aesthetics_/',
   instagramHandle: '@lumine_aesthetics_',
   // TODO: replace with real opening hours
