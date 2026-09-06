@@ -4,7 +4,8 @@ An in-line SMTP relay that inspects outbound email for sensitive data and
 allows, blocks, quarantines, redacts, or tags it according to policy —
 Forcepoint-Email-DLP class, self-hosted.
 
-**Status:** design phase. No implementation yet.
+**Status:** design phase. No implementation yet. First deployment is for a
+fintech client — see §1.2 and §15.1 of the design for what that constrains.
 
 Start with the design document: [`docs/DESIGN.md`](./docs/DESIGN.md).
 
@@ -25,9 +26,10 @@ Three processes over PostgreSQL + Redis:
 
 ## Standalone by design
 
-This directory is self-contained and shares nothing with the clinic management
-backend in the repository root — separate package, schema, and deployment. It
-can be lifted into its own repository with:
+This directory is self-contained and shares nothing with the unrelated
+application in the repository root — separate package, schema, and deployment.
+It lives here only because it is where the branch is; lift it into its own
+repository with:
 
 ```sh
 git subtree split --prefix=email-dlp -b email-dlp-standalone
@@ -35,5 +37,5 @@ git subtree split --prefix=email-dlp -b email-dlp-standalone
 
 ## Next step
 
-`docs/DESIGN.md` §21 lists the eight open questions that need answers before
-Phase 1 implementation starts.
+`docs/DESIGN.md` §21 is the client discovery list — six blocking questions that
+gate Phase 1, plus scoping and delivery questions.

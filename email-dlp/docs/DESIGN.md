@@ -8,9 +8,15 @@
 
 ## 1. Purpose
 
-Prevent sensitive data — patient records (PHI), payment card data, government
-identifiers, credentials, source code, confidential documents — from leaving the
-organisation over email, **before** the message reaches the internet.
+Prevent sensitive data — customer and employee records, payment card data,
+government identifiers, health records, credentials, source code, confidential
+documents — from leaving the organisation over email, **before** the message
+reaches the internet.
+
+The system is built for a specific client deployment, but nothing in the design
+is industry-specific: what counts as sensitive is expressed entirely in policy
+and dictionaries (§9), so the same engine serves a hospital, a bank, or a
+software company by swapping the policy pack, not the code.
 
 The system sits in the outbound mail path as an SMTP relay. Every message is
 parsed, extracted, classified against policy, and then allowed, quarantined,
@@ -20,10 +26,33 @@ immutable incident record with full forensics.
 ### 1.1 Why in-line relay (and not API-based)
 
 An API integration (Gmail/Graph) can only detect a leak *after* delivery. Once
-a message with 4,000 patient records has reached an external MX, deletion is a
+a message with 4,000 customer records has reached an external MX, deletion is a
 courtesy, not a control. An in-line relay is the only topology where "block"
 actually means blocked. Cost: the gateway becomes availability-critical mail
 infrastructure, which drives most of the reliability design in §6 and §16.
+
+### 1.2 Client context
+
+The first deployment is for a **fintech company**. That is not a cosmetic
+detail — it sets three things that ripple through the whole design:
+
+1. **The data is regulated on multiple axes at once.** Cardholder data
+   (PCI-DSS), customer financial records, KYC identity documents, and — if the
+   client is India-based — RBI's payment-data localisation circular and the
+   DPDP Act. §15.1 works through this.
+2. **The highest-risk leak is bulk, not incidental.** A support agent emailing
+   one customer's statement is a policy violation. An analyst exporting 50,000
+   rows of `customer_id, account_no, ifsc, balance` to a personal address is
+   the event that ends careers and triggers regulatory reporting. The
+   record-structure detector (§8.4) and EDM (§8.5) are the load-bearing
+   components here, not the regex library.
+3. **Where the system stores data is itself a compliance question.** A DLP
+   gateway that retains forensic copies of messages containing cardholder data
+   has just created a new PCI scope boundary. §12.4 retention and §8's
+   never-store-raw-values rule are compliance controls, not hygiene.
+
+Everything else in this document is platform-neutral. The fintech specifics are
+confined to §9.6 (policy pack), §15.1 (regulatory), and §21 (discovery).
 
 ---
 
@@ -64,8 +93,9 @@ Honest assessment of what we match, approximate, and skip.
 | Appliance HA, clustering, 100k+ msg/hr | Horizontal scale designed in; not tuned to appliance grade | 3 |
 
 **Bottom line:** phases 1–3 produce a system that catches the leaks that
-actually happen — bulk PHI exports, misdirected patient lists, card numbers in
-spreadsheets, credentials in plaintext, confidential docs to personal Gmail.
+actually happen — bulk database exports, misdirected customer lists, card
+numbers in spreadsheets, credentials in plaintext, confidential documents sent
+to a personal Gmail account on someone's last week at the company.
 The gap to Forcepoint is breadth of policy library and ML sophistication, not
 architecture.
 
@@ -176,7 +206,8 @@ type Direction =
 ```
 
 Protected domains are configured, plus optional "trusted partner" domain groups
-that can carry relaxed policy (e.g. the billing vendor may receive claims data).
+that can carry relaxed policy (e.g. the KYC verification vendor legitimately
+receives identity documents; the auditor legitimately receives ledger extracts).
 
 **Sender identity** = authenticated SMTP AUTH user where available, else
 envelope MAIL FROM, else source IP mapping. Recorded separately so incidents
@@ -187,7 +218,33 @@ compromised-account leak looks exactly like a normal one otherwise.
 
 ## 6. SMTP gateway behaviour
 
-### 6.1 Ingress
+### 6.1 Placing the gateway in the client's mail flow
+
+Before any of the below matters, outbound mail has to actually traverse the
+gateway. How that is arranged depends entirely on the client's mail platform,
+and it is the part of the project most likely to need their IT team:
+
+| Client platform | How the gateway gets in the path | Friction |
+|---|---|---|
+| **Microsoft 365 / Exchange Online** | Outbound connector: `Route mail through these smart hosts` → gateway. Gateway then relays back out via a receive connector or direct-to-MX. | Moderate — tenant admin change, needs certificate + static IP |
+| **Google Workspace** | Routing → `Outbound gateway` (or a content-compliance rule with a route to the gateway host). | Moderate — same shape |
+| **On-prem Exchange / Postfix** | Send connector / `relayhost` points at the gateway. | Low |
+| **Application-generated mail only** (ERP, CRM, billing) | Change each app's SMTP host to the gateway. No mailbox platform involved. | Lowest — a good Phase 1 pilot scope |
+| **Staff using desktop/mobile clients directly** | Clients submit to the gateway on 587 with AUTH, or the platform routes on their behalf. | Highest — touches every user |
+
+Two consequences worth stating early to the client:
+
+1. **The gateway becomes production mail infrastructure.** Its availability
+   budget is the mail system's availability budget. This drives §6.4.
+2. **Mailbox-platform routing changes are a change-control item**, not a
+   developer task. Their IT/mail owner needs to be in the project from week one,
+   and the pilot should start with application-generated mail (lowest friction,
+   often the highest-volume source of bulk data exports anyway).
+
+A useful staged rollout: application mail → one pilot department → all staff,
+with the gateway in monitor mode (§9.5) at every step before enforcement.
+
+### 6.2 Ingress
 
 - Listens on 587 (submission, AUTH required, STARTTLS required) and optionally
   25 for internal-only relay restricted by IP allowlist.
@@ -205,7 +262,7 @@ compromised-account leak looks exactly like a normal one otherwise.
   true `550 5.7.0 Message blocked by DLP policy` rejection for the common case.
   Recommended default: sync for small messages, async above the threshold.
 
-### 6.2 Egress
+### 6.3 Egress
 
 - Relays to a configured smarthost (SES/SendGrid/Google/on-prem) with pooled
   connections, or direct-to-MX if configured.
@@ -216,7 +273,7 @@ compromised-account leak looks exactly like a normal one otherwise.
 - Adds `X-DLP-Scan-Id` and, when policy calls for downstream encryption,
   `X-DLP-Encrypt: true` (or a configured subject tag) for the encryption gateway.
 
-### 6.3 Failure posture — the single most important operational decision
+### 6.4 Failure posture — the single most important operational decision
 
 If the inspection pipeline is down, what happens to mail?
 
@@ -346,7 +403,20 @@ detector pairs a pattern with an arithmetic/format validator:
 | US SSN | `\d{3}-?\d{2}-?\d{4}` | Not 000/666/9xx area, not 00 group, not 0000 serial |
 | IBAN | Country + length table | **mod-97** |
 | NPI (US health) | 10 digits | Luhn with 80840 prefix |
+| Bank account no. (India) | 9–18 digits | Weak alone — **requires** IFSC or account-context proximity to score |
+| UPI VPA | `[\w.\-]{3,}@[a-z]{3,}` | Handle against a known PSP suffix list (`@okhdfcbank`, `@ybl`, `@paytm`…) |
+| CVV | 3–4 digits | Only ever scored in proximity to a PAN or "cvv/cvc" keyword |
+| Credit bureau score | 3 digits, 300–900 | Requires "CIBIL/Experian/bureau" proximity |
+| Voter ID / DL / passport | Format per issuer | Format check; KYC-document context boost |
 | Email/phone | RFC-ish | Domain sanity, length |
+
+**Fintech-specific note on precision.** Bank account numbers and CVVs are the
+two detectors that will generate the most false positives if scored on pattern
+alone — a 12-digit invoice number and a 3-digit quantity are everywhere in
+normal business mail. Both are deliberately specified as **context-required**:
+they contribute score only in proximity to a corroborating signal (an IFSC, a
+PAN, an account-related keyword). This is the difference between a policy the
+client keeps and one they switch off in week three.
 
 Plus **context boosting**: a bare 16-digit number scores 0.55; the same number
 within 50 characters of "card", "cvv", "expiry", "visa" scores 0.95. Proximity
@@ -365,7 +435,7 @@ Weighted term lists with per-dictionary thresholds:
 
 ```ts
 {
-  id: 'phi-clinical-terms',
+  id: 'clinical-terms',
   terms: [
     { term: 'diagnosis', weight: 2 },
     { term: 'ICD-10',    weight: 3 },
@@ -383,21 +453,27 @@ precision for recall, and false positives are what kill DLP deployments.
 
 ### 8.4 Record-structure detector
 
-The highest-value detector in practice. A single patient name is normal
-business. A CSV with 4,000 rows of `name,dob,phone,diagnosis` is a breach.
+The highest-value detector in practice. One customer record in an email is
+normal business. A CSV with 4,000 rows of `name,dob,phone,account_no` is a
+breach. The difference is volume, and no pattern detector expresses volume.
 
 Operates over parsed tabular parts (CSV/XLSX): infers column semantics from
 headers *and* from per-column value validation, then reports
 `recordCount` for the combination. Policy can then say
-"≥25 rows containing (name + any patient identifier)" — the rule that catches
+"≥25 rows containing (name + any strong identifier)" — the rule that catches
 real exfiltration and ignores routine correspondence.
 
 ### 8.5 Exact Data Match (EDM) — Phase 3
 
-Fingerprint a source of truth (the patient DB) so the gateway recognises *your*
-data specifically, not merely data-shaped strings.
+Fingerprint the client's system of record — customer master, HR database,
+patient index, cardholder vault — so the gateway recognises *their* data
+specifically, not merely data-shaped strings. This is what separates "a number
+that looks like an account number" from "account number 7781 belonging to
+customer Sharma".
 
-- Indexer reads the source table, normalises each cell, and stores
+- Indexer reads the source table over a read-only replica or an exported
+  extract — the gateway must never hold write credentials to the client's
+  system of record — normalises each cell, and stores
   `HMAC-SHA256(salt, normalisedValue)` — never plaintext, never a reversible
   hash. The salt lives in a KMS/secret store.
 - Index is a Bloom filter (fast negative) fronting a hash set (exact positive).
@@ -421,7 +497,8 @@ contract, a renamed treatment protocol).
 ### 8.7 LLM classifier stage — Phase 4
 
 For the categories regex cannot express: "is this message discussing an
-unannounced acquisition", "does this describe a patient's condition in prose".
+unannounced acquisition", "does this describe a named individual's medical or
+financial situation in prose".
 
 Strict constraints, because this stage is the cost and privacy risk:
 
@@ -476,7 +553,7 @@ interface Policy {
 
 interface PolicyScope {
   direction: Direction[];                 // ['outbound','mixed']
-  senderGroups?: string[];                // 'clinicians', 'billing'
+  senderGroups?: string[];                // 'finance', 'support', 'engineering'
   excludeSenderGroups?: string[];
   recipientDomains?: DomainMatcher[];     // 'gmail.com', '*.partner.com'
   excludeRecipientGroups?: string[];      // trusted partners
@@ -557,12 +634,32 @@ production.** Deployments fail on false positives, not missing detectors.
 
 ### 9.6 Shipped policy pack (Phase 2)
 
-~20 curated, tested policies: PHI bulk export, PHI in body, PCI card data,
-India PII (Aadhaar/PAN/GSTIN), credentials & secrets, source code, financial
-statements pre-announcement, personal-webmail large attachment, encrypted
-attachment to untrusted domain, resume/HR data, legal privilege markers,
-misdirected-recipient heuristic (external recipient on a thread that was
-internal), after-hours bulk export, departing-employee watchlist.
+The pack the client actually gets is selected during discovery (§21) from this
+menu — shipping all of it to every client is how you get a false-positive
+problem on day one.
+
+**Universal (every deployment):**
+credentials & secrets in plaintext · encrypted/unopenable attachment to an
+untrusted domain · large attachment to personal webmail · misdirected-recipient
+heuristic (external address added to a thread that was internal) · bulk record
+export by volume · departing-employee watchlist · after-hours bulk export.
+
+**Regime-specific (enabled by what applies to the client). For this fintech
+client the expected default selection is PCI-DSS + India DPDP + Financial,
+confirmed in discovery:**
+
+| Regime | Policies |
+|---|---|
+| PCI-DSS | Cardholder data in body/attachment, CVV, cardholder bulk export |
+| HIPAA / health | PHI in body, PHI bulk export, clinical-terms dictionary, NPI |
+| India DPDP | Aadhaar, PAN, GSTIN, bank account + IFSC |
+| GDPR | EU personal data with special-category terms, data-subject bulk export |
+| Financial / listed company | Pre-announcement financial statements, MNPI markers, deal codenames |
+| IP / product | Source code, private keys, design documents, IDM-fingerprinted docs |
+| HR / legal | Salary and resume data, legal privilege markers, investigation files |
+
+Each policy ships in monitor mode (§9.5) with a documented expected hit profile,
+so the client can see its real-traffic impact before it enforces.
 
 ---
 
@@ -748,11 +845,42 @@ of what it protects.
 | Gateway compromise = total mail visibility | Minimal blast radius: KMS keys separate, blob store credentials separate, no shell in production image, egress restricted to smarthost + KMS |
 | DLP as an oracle (insider tunes payload against NDR text) | NDR names category only, never detection detail (§10) |
 
-**Regulatory note:** for a HIPAA deployment the gateway is squarely in scope as
-a system that processes PHI — it needs a BAA with the hosting provider, the
-audit trail in §12.2, and the retention limits in §12.4. This is a real
-compliance obligation, not a checkbox, and should be confirmed before the first
-production message flows.
+### 15.1 Regulatory posture
+
+**Raise this with the client early.** The gateway processes
+every outbound message, so it inherits the client's most restrictive data
+obligation. Whatever regime applies to *their* data applies to *this system*:
+
+- **HIPAA** — the gateway processes PHI; a BAA with the hosting provider is
+  required, plus the audit trail in §12.2 and the retention limits in §12.4.
+- **PCI-DSS** — if cardholder data traverses it, the gateway is in the CDE
+  unless carefully segmented. Retaining forensic blobs containing PANs is a
+  compliance problem; §12.4 retention and §8's no-raw-values rule exist for it.
+- **GDPR / India DPDP** — data residency for the blob store and incident DB,
+  lawful basis for monitoring employee communications, and DPIA.
+- **Employee monitoring law** — in several jurisdictions (Germany, France,
+  and works-council environments generally) inspecting staff email requires
+  notification, consultation, or consent. This is a **legal precondition on
+  deployment**, not a feature, and it is the client's counsel's call — not ours.
+  Flag it in discovery; do not let it surface after the gateway is built.
+
+#### For an India-based fintech client specifically
+
+These are hard constraints on the architecture, not advisory notes. Confirm each
+in discovery (§21) — several can invalidate a deployment choice after the fact:
+
+| Requirement | Effect on this design |
+|---|---|
+| **RBI payment-data localisation** (Storage of Payment System Data, 2018) — payment system data stored only in India | Blob store, incident DB, and Redis must be in an Indian region. Rules out most US-region managed services and, in practice, **rules out a foreign-hosted LLM API for the §8.7 stage** — self-hosted in-country only. |
+| **CERT-In Directions (2022)** — security logs retained 180 days **within India**; reportable incidents notified within 6 hours | §12.4 log retention floor is 180 days, in-country. The gateway should expose an incident-export path suited to a 6-hour reporting clock. |
+| **DPDP Act 2023** | Lawful basis for processing employee and customer data in the gateway; breach notification; data-principal rights over what the incident DB retains. |
+| **PCI-DSS** (if the client touches card data) | Retaining a forensic copy of a message containing a PAN puts the blob store in the CDE. Options: never retain blobs for card-data incidents (metadata + masked samples only), or accept and segment the scope. **Recommend the former** — decide before build, not after an audit. |
+| **RBI IT Governance / Cyber Security Framework** | Change management, access control, and audit expectations that the §12.2 hash-chained log and §13 RBAC are designed to satisfy. |
+| **SEBI / MNPI** (if listed or handling market-sensitive data) | Adds the pre-announcement financial and deal-codename policies from §9.6. |
+
+**The single most consequential of these is localisation**, because it
+constrains hosting region, managed-service choice, and the LLM stage
+simultaneously. Get a written answer before selecting infrastructure.
 
 ---
 
@@ -833,7 +961,7 @@ with true file type and resource limits, archives. Pattern detectors with
 validators, secret detectors, dictionaries, record-count detector. Policy engine
 with scope/condition/actions. Verdicts: allow/block/quarantine/tag. Incident
 persistence. `/v1/scan`. Full test suite per §18 (1–5).
-**Exit criteria:** a message with 25 patient records to gmail.com is quarantined;
+**Exit criteria:** a message with 25 customer records to gmail.com is quarantined;
 the same to a partner domain is allowed; an open-relay test fails to relay;
 throughput ≥ 20 msg/s per worker.
 
@@ -860,19 +988,70 @@ usable product at the end of Phase 2 (~3.5 weeks).
 
 ---
 
-## 21. Open questions — need answers before Phase 1
+## 21. Client discovery — what to ask before Phase 1
 
-1. **Smarthost:** which upstream relays outbound mail today (SES, SendGrid,
-   Google Workspace, on-prem Postfix)? Determines egress auth and DSN handling.
-2. **Sender population:** application-generated mail only, or staff MUAs too?
-   Staff mail needs the quarantine notification/self-release flow; app mail does not.
-3. **Fail mode default:** confirm `fail-closed`. It means a DLP outage delays
-   mail — an operational commitment that needs sign-off, not a technical default.
-4. **Sync vs async inspection threshold:** confirm the 2 MB sync cutoff (true
-   SMTP rejection for small messages, NDR above).
-5. **Protected + partner domains:** the actual lists.
-6. **Regulatory scope:** HIPAA, PCI-DSS, India DPDP — which apply? Drives the
-   policy pack and the retention/BAA requirements in §15.
-7. **LLM stage:** acceptable at all? If yes, hosted API or self-hosted endpoint?
-8. **Volume:** messages/day and peak, and average attachment size. Sets the
-   Phase 1 sizing.
+This is a client engagement, so the unknowns are theirs, not ours. The questions
+below are grouped by whether they **block** implementation or merely shape it.
+Take the blocking six to the client's IT/security owner in one session; they are
+answerable in an hour and each one changes the build.
+
+### 21.1 Blocking — cannot start Phase 1 without these
+
+1. **Mail platform.** Microsoft 365, Google Workspace, on-prem Exchange, or
+   application-generated mail only? Determines how the gateway enters the mail
+   path (§6.1), who has to make the change, and how long change control takes.
+2. **Smarthost / egress.** What relays their outbound mail today — SES,
+   SendGrid, Google, an on-prem MTA? Sets egress auth, DSN handling, and IP
+   reputation continuity (the sending IP must not change silently, or their
+   deliverability drops).
+3. **Hosting region and localisation.** India-only, or global? If RBI payment-
+   data localisation applies (§15.1), it constrains region, managed services,
+   and the LLM stage before a single line is written.
+4. **Card data in scope?** Does cardholder data traverse their email at all? If
+   yes, decide now whether forensic blobs for card incidents are retained
+   (PCI CDE implications, §15.1) — this is a build-time decision, not a config
+   toggle.
+5. **Fail mode.** Confirm `fail-closed` (§6.4). It means a DLP outage delays
+   the company's mail. This needs written sign-off from someone senior enough
+   to own that trade-off, not a developer's default.
+6. **Employee-monitoring legal clearance.** Has their counsel cleared
+   inspection of staff email, and are employees notified? A legal precondition
+   (§15.1), and the one most likely to surface late and expensively.
+
+### 21.2 Scoping — shape the policy pack and sizing
+
+7. **Sender population.** Application mail only, staff mailboxes, or both?
+   Staff mail requires the quarantine notification and self-release flow;
+   app-only mail does not, and is the recommended pilot scope (§6.1).
+8. **Protected and partner domains.** The actual lists — owned domains, plus
+   the vendors, auditors, and banking partners who legitimately receive
+   customer data and need relaxed policy.
+9. **Regulatory regimes that actually apply.** PCI-DSS, DPDP, GDPR, SEBI/MNPI,
+   sector-specific RBI directions. Drives the §9.6 policy selection.
+10. **Systems of record for EDM (§8.5).** Which databases hold the crown
+    jewels — customer master, KYC store, transaction ledger? Read-only replica
+    access needed; the gateway must never hold write credentials.
+11. **Volume.** Messages/day, peak hour, average and p99 attachment size. Sets
+    Phase 1 sizing (§16).
+12. **Known incidents.** Has data walked out over email before, and how? The
+    single most useful question in the whole list — it tells you which policy
+    to build first and gives you a real test case with a known-correct verdict.
+13. **Reviewer team.** Who triages quarantine, what SLA, and is separation of
+    duties (§11.3) achievable with their headcount? A quarantine queue nobody
+    staffs turns "quarantine" into "delete".
+14. **LLM stage (§8.7).** Acceptable at all? If localisation applies, only a
+    self-hosted in-country model is viable. Default: leave it off.
+
+### 21.3 Delivery questions for us, not the client
+
+15. **Bespoke or product?** Is this a one-client deployment, or the first
+    instance of something resold? Multi-tenancy is cheap to design in now and
+    expensive to retrofit — the data model (§12) is already tenant-shaped, but
+    policy scoping, key isolation, and the admin UI are not.
+16. **Who operates it in production?** If the client's ops team runs it, the
+    Phase 2 runbook (§19) and the alerting in §17 are contractual deliverables,
+    not nice-to-haves.
+17. **Acceptance criteria.** Agree these before Phase 1: a labelled test corpus
+    of their own mail (de-identified) with an agreed precision/recall target
+    per policy. Without it, "does the DLP work?" becomes an opinion, and
+    opinions are how fixed-price projects overrun.
