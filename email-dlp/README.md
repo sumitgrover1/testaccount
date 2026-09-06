@@ -4,8 +4,10 @@ An in-line SMTP relay that inspects outbound email for sensitive data and
 allows, blocks, quarantines, redacts, or tags it according to policy —
 Forcepoint-Email-DLP class, self-hosted.
 
-**Status:** design phase. No implementation yet. First deployment is for a
-fintech client — see §1.2 and §15.1 of the design for what that constrains.
+**Status:** design phase. No implementation yet. The deployment is for an
+India-based fintech client, which fixes the hosting region (India only, RBI
+localisation) and rules out a hosted LLM classifier — see the design's
+"Decisions to date", §1.2, and §15.1.
 
 Start with the design document: [`docs/DESIGN.md`](./docs/DESIGN.md).
 

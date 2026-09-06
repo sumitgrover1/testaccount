@@ -3,6 +3,25 @@
 **Status:** Draft for review
 **Scope:** Outbound email Data Loss Prevention gateway, Forcepoint-Email-DLP class
 **Deployment model:** In-line SMTP relay (store-and-forward MTA in the send path)
+**Client:** India-based fintech company
+
+## Decisions to date
+
+Settled — these are fixed inputs to Phase 1, not open questions:
+
+| Decision | Value | Consequence |
+|---|---|---|
+| Topology | In-line SMTP relay, not API-based | "Block" actually blocks (§1.1); gateway becomes production mail infrastructure |
+| Codebase | Standalone project, no coupling to anything else | Own package, schema, deployment |
+| Client sector | Fintech | Policy pack defaults to PCI-DSS + DPDP + Financial (§9.6) |
+| Jurisdiction | **India** | RBI localisation, CERT-In, DPDP all apply as hard constraints (§15.1) |
+| Hosting region | **India only** — all state (blob store, Postgres, Redis) | Follows from localisation; rules out non-Indian managed-service regions |
+| LLM classifier stage | **Off**; self-hosted in-country only if ever enabled | Follows from localisation (§8.7) |
+| Fail mode | `fail-closed` (proposed default) | Needs client sign-off — §21.1 Q5 |
+
+Still open: the six blocking questions in §21.1. Four of them (mail platform,
+smarthost, card-data scope, legal clearance) are deployment- and config-layer
+concerns that do **not** block the detection engine — Phase 1 can start.
 
 ---
 
@@ -33,13 +52,14 @@ infrastructure, which drives most of the reliability design in §6 and §16.
 
 ### 1.2 Client context
 
-The first deployment is for a **fintech company**. That is not a cosmetic
-detail — it sets three things that ripple through the whole design:
+The deployment is for an **India-based fintech company**. That is not a
+cosmetic detail — it sets three things that ripple through the whole design:
 
 1. **The data is regulated on multiple axes at once.** Cardholder data
-   (PCI-DSS), customer financial records, KYC identity documents, and — if the
-   client is India-based — RBI's payment-data localisation circular and the
-   DPDP Act. §15.1 works through this.
+   (PCI-DSS), customer financial records, KYC identity documents, RBI's
+   payment-data localisation circular, CERT-In's logging directions, and the
+   DPDP Act — simultaneously. §15.1 works through this. The binding one is
+   localisation: it fixes the hosting region before any other choice is made.
 2. **The highest-risk leak is bulk, not incidental.** A support agent emailing
    one customer's statement is a policy violation. An analyst exporting 50,000
    rows of `customer_id, account_no, ifsc, balance` to a personal address is
@@ -509,6 +529,10 @@ Strict constraints, because this stage is the cost and privacy risk:
 - Off by default; must be explicitly enabled with an acknowledged data-handling
   note, because it sends message content to a third party — the exact thing the
   product exists to prevent. Self-hosted model endpoint is a supported option.
+- **For this client: a hosted third-party API is not an option.** RBI
+  localisation (§15.1) means content cannot leave India, so this stage is either
+  off or backed by a model self-hosted in an Indian region. Plan Phase 1–3
+  assuming it is off; the detection quality targets must be met without it.
 - Returns a structured verdict (category + confidence + rationale) that feeds
   scoring like any other detector. It never makes the block decision alone.
 
@@ -864,10 +888,11 @@ obligation. Whatever regime applies to *their* data applies to *this system*:
   deployment**, not a feature, and it is the client's counsel's call — not ours.
   Flag it in discovery; do not let it surface after the gateway is built.
 
-#### For an India-based fintech client specifically
+#### India — applies to this client
 
-These are hard constraints on the architecture, not advisory notes. Confirm each
-in discovery (§21) — several can invalidate a deployment choice after the fact:
+These are hard constraints on the architecture, not advisory notes. The client
+is India-based, so every row below is in force; discovery (§21) confirms the
+details, not whether they apply:
 
 | Requirement | Effect on this design |
 |---|---|
@@ -878,9 +903,20 @@ in discovery (§21) — several can invalidate a deployment choice after the fac
 | **RBI IT Governance / Cyber Security Framework** | Change management, access control, and audit expectations that the §12.2 hash-chained log and §13 RBAC are designed to satisfy. |
 | **SEBI / MNPI** (if listed or handling market-sensitive data) | Adds the pre-announcement financial and deal-codename policies from §9.6. |
 
-**The single most consequential of these is localisation**, because it
-constrains hosting region, managed-service choice, and the LLM stage
-simultaneously. Get a written answer before selecting infrastructure.
+**Localisation is the load-bearing constraint** — it fixes hosting region,
+managed-service choice, and the LLM stage simultaneously. It is therefore
+treated as decided (see Decisions to date): **all state stays in an Indian
+region, and the LLM stage stays off unless a self-hosted in-country model is
+provisioned.** What remains for discovery is which Indian region/provider, and
+whether card data is in scope (which decides forensic-blob retention).
+
+Practical consequence for infrastructure selection: prefer AWS `ap-south-1`
+(Mumbai) / `ap-south-2` (Hyderabad), Azure Central/South India, GCP
+`asia-south1/2`, or an Indian colo — and verify that every *managed* dependency
+(object store, managed Postgres, managed Redis, log aggregation, error tracking,
+APM) is also India-resident. Error trackers and APM SaaS are the usual
+localisation leak: they ship message metadata and stack payloads to a US region
+by default, and nobody notices until audit.
 
 ---
 
@@ -1004,9 +1040,11 @@ answerable in an hour and each one changes the build.
    SendGrid, Google, an on-prem MTA? Sets egress auth, DSN handling, and IP
    reputation continuity (the sending IP must not change silently, or their
    deliverability drops).
-3. **Hosting region and localisation.** India-only, or global? If RBI payment-
-   data localisation applies (§15.1), it constrains region, managed services,
-   and the LLM stage before a single line is written.
+3. **Hosting specifics.** *Settled: Indian region, localisation applies.* What
+   remains: which cloud/region or colo, whether they already have a preferred
+   provider and landing zone, and confirmation that every managed dependency
+   (object store, Postgres, Redis, logging, APM, error tracking) is
+   India-resident — see §15.1 for why this last one bites late.
 4. **Card data in scope?** Does cardholder data traverse their email at all? If
    yes, decide now whether forensic blobs for card incidents are retained
    (PCI CDE implications, §15.1) — this is a build-time decision, not a config
