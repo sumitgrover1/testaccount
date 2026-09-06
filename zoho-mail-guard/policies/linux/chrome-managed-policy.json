@@ -1,0 +1,38 @@
+{
+  "ExtensionInstallForcelist": [
+    "REPLACE_WITH_EXTENSION_ID;https://clients2.google.com/service/update2/crx"
+  ],
+  "ExtensionSettings": {
+    "REPLACE_WITH_EXTENSION_ID": {
+      "installation_mode": "force_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx",
+      "toolbar_pin": "force_pinned"
+    }
+  },
+  "IncognitoModeAvailability": 1,
+  "BrowserGuestModeEnabled": false,
+  "DeveloperToolsAvailability": 2,
+  "3rdparty": {
+    "extensions": {
+      "REPLACE_WITH_EXTENSION_ID": {
+        "policy": {
+          "enabled": true,
+          "mode": "enforce",
+          "allowedAccountDomains": ["yourcompany.com"],
+          "device": {
+            "required": true,
+            "approved": [{ "id": "PASTE-DEVICE-ID", "label": "Reception laptop" }]
+          },
+          "profile": { "blockIncognito": true },
+          "schedule": {
+            "enabled": true,
+            "timezone": "Asia/Kolkata",
+            "days": [1, 2, 3, 4, 5, 6],
+            "windows": [{ "start": "09:30", "end": "20:00" }]
+          },
+          "contact": { "supportName": "IT Helpdesk", "supportEmail": "it@yourcompany.com" }
+        }
+      }
+    }
+  }
+}

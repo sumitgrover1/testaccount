@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Zoho Mail Guard - enterprise policy for Google Chrome on macOS.
+
+  Install by hand:
+    sudo cp com.google.Chrome.plist "/Library/Managed Preferences/com.google.Chrome.plist"
+    sudo chown root:wheel "/Library/Managed Preferences/com.google.Chrome.plist"
+    sudo chmod 644 "/Library/Managed Preferences/com.google.Chrome.plist"
+    killall cfprefsd, restart Chrome, then check chrome://policy
+
+  With Jamf or Intune, upload this as a Custom Settings / Preference File payload
+  for the com.google.Chrome domain instead of copying it manually.
+
+  Replace REPLACE_WITH_EXTENSION_ID and the sample values below.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>ExtensionInstallForcelist</key>
+    <array>
+      <string>REPLACE_WITH_EXTENSION_ID;https://clients2.google.com/service/update2/crx</string>
+    </array>
+
+    <key>IncognitoModeAvailability</key>
+    <integer>1</integer>
+    <key>BrowserGuestModeEnabled</key>
+    <false/>
+    <key>DeveloperToolsAvailability</key>
+    <integer>2</integer>
+
+    <key>ExtensionSettings</key>
+    <dict>
+      <key>REPLACE_WITH_EXTENSION_ID</key>
+      <dict>
+        <key>installation_mode</key>
+        <string>force_installed</string>
+        <key>update_url</key>
+        <string>https://clients2.google.com/service/update2/crx</string>
+        <key>toolbar_pin</key>
+        <string>force_pinned</string>
+      </dict>
+    </dict>
+  </dict>
+</plist>

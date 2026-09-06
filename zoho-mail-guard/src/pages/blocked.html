@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Company mail is blocked here</title>
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="blocked.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="card shield">
+        <div class="badge" aria-hidden="true">&#128274;</div>
+        <h1 id="title">Company mail cannot be opened here</h1>
+        <p id="explain" class="muted"></p>
+
+        <div class="reason">
+          <span class="pill bad" id="code">BLOCKED</span>
+          <span id="reason"></span>
+        </div>
+
+        <h2>What you can do</h2>
+        <ul id="steps"></ul>
+
+        <div class="row">
+          <button id="retry" type="button">Try again</button>
+          <button id="copy" class="secondary" type="button">Copy details for IT</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Details your IT team will ask for</h2>
+        <dl class="details">
+          <dt>Device</dt>
+          <dd id="device" class="mono"></dd>
+          <dt>Device ID</dt>
+          <dd id="deviceId" class="mono"></dd>
+          <dt>Account</dt>
+          <dd id="account" class="mono"></dd>
+          <dt>Address</dt>
+          <dd id="url" class="mono"></dd>
+          <dt>Time</dt>
+          <dd id="time" class="mono"></dd>
+        </dl>
+        <p class="small muted" id="contact"></p>
+      </div>
+    </main>
+    <script type="module" src="blocked.js"></script>
+  </body>
+</html>

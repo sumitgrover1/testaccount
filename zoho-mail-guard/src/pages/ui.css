@@ -1,0 +1,269 @@
+/* Shared styling for the extension's own pages (blocked, popup, options). */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --border: #dde3ee;
+  --text: #16202e;
+  --muted: #5c6b7f;
+  --accent: #1a4fd6;
+  --accent-weak: #e8effd;
+  --danger: #b3261e;
+  --danger-weak: #fdecea;
+  --ok: #10692f;
+  --ok-weak: #e6f4ea;
+  --warn: #915000;
+  --warn-weak: #fdf1dd;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151c;
+    --surface: #191f28;
+    --surface-2: #1f2731;
+    --border: #2c3540;
+    --text: #e8edf4;
+    --muted: #9aa8b8;
+    --accent: #7ea3ff;
+    --accent-weak: #1d2942;
+    --danger: #ff9b93;
+    --danger-weak: #3a1f1d;
+    --ok: #7ee2a0;
+    --ok-weak: #14301f;
+    --warn: #f0c07a;
+    --warn-weak: #35280f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Elements toggled with el.hidden are laid out with display:flex further down,
+   which would otherwise beat the user-agent's [hidden] rule. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    14px/1.55 system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 21px;
+  font-weight: 650;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12.5px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.spread {
+  justify-content: space-between;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill.ok {
+  background: var(--ok-weak);
+  color: var(--ok);
+}
+
+.pill.bad {
+  background: var(--danger-weak);
+  color: var(--danger);
+}
+
+.pill.warn {
+  background: var(--warn-weak);
+  color: var(--warn);
+}
+
+.pill.info {
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+
+button,
+.btn {
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type='text'],
+input[type='password'],
+input[type='number'],
+input[type='time'],
+input[type='email'],
+select,
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  min-height: 76px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+}
+
+label.field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+label.field > span {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+label.check {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+label.check input {
+  margin-top: 3px;
+}
+
+code,
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+}
+
+.locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.scroll {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+@media (max-width: 620px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}

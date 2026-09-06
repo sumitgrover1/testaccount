@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "Zoho Mail Guard \u2014 Company Email Access Control",
+  "short_name": "Zoho Mail Guard",
+  "version": "1.0.0",
+  "description": "Control where company Zoho Mail may be opened: approved devices, work hours, office network, company accounts only.",
+  "minimum_chrome_version": "116",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Zoho Mail Guard",
+    "default_popup": "src/pages/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "options_page": "src/pages/options.html",
+  "permissions": ["storage", "tabs", "webNavigation", "alarms"],
+  "optional_permissions": ["downloads", "identity.email"],
+  "host_permissions": [
+    "*://*.zoho.com/*",
+    "*://*.zoho.in/*",
+    "*://*.zoho.eu/*",
+    "*://*.zoho.com.au/*",
+    "*://*.zoho.com.cn/*",
+    "*://*.zoho.jp/*",
+    "*://*.zoho.ca/*",
+    "*://*.zoho.sa/*",
+    "*://*.zoho.uk/*",
+    "*://*.zohocloud.ca/*"
+  ],
+  "storage": {
+    "managed_schema": "policies/managed-schema.json"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.zoho.com/*",
+        "*://*.zoho.in/*",
+        "*://*.zoho.eu/*",
+        "*://*.zoho.com.au/*",
+        "*://*.zoho.com.cn/*",
+        "*://*.zoho.jp/*",
+        "*://*.zoho.ca/*",
+        "*://*.zoho.sa/*",
+        "*://*.zoho.uk/*",
+        "*://*.zohocloud.ca/*"
+      ],
+      "js": ["src/content/zoho-guard.js"],
+      "css": ["src/content/zoho-guard.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ]
+}

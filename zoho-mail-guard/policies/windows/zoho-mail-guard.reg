@@ -1,0 +1,23 @@
+Windows Registry Editor Version 5.00
+
+; Zoho Mail Guard - enterprise policy for Google Chrome on Windows.
+;
+; 1. Replace REPLACE_WITH_EXTENSION_ID everywhere below with the real extension ID
+;    (chrome://extensions with Developer mode on, or the Web Store listing ID).
+; 2. Replace the JSON payload values with your own domains / device IDs.
+;    The payload must be valid JSON on a single line, with every " escaped as \".
+; 3. Run as Administrator, then restart Chrome and check chrome://policy.
+
+; --- Force-install the extension so the user cannot remove it ---------------
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist]
+"1"="REPLACE_WITH_EXTENSION_ID;https://clients2.google.com/service/update2/crx"
+
+; --- Close the obvious bypasses --------------------------------------------
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]
+"IncognitoModeAvailability"=dword:00000001
+"BrowserGuestModeEnabled"=dword:00000000
+"DeveloperToolsAvailability"=dword:00000002
+
+; --- Push the guard's own rules --------------------------------------------
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\3rdparty\extensions\REPLACE_WITH_EXTENSION_ID\policy]
+"policy"="{\"enabled\":true,\"mode\":\"enforce\",\"allowedAccountDomains\":[\"yourcompany.com\"],\"device\":{\"required\":true,\"approved\":[{\"id\":\"PASTE-DEVICE-ID\",\"label\":\"Reception laptop\"}]},\"profile\":{\"blockIncognito\":true},\"schedule\":{\"enabled\":true,\"timezone\":\"Asia/Kolkata\",\"days\":[1,2,3,4,5,6],\"windows\":[{\"start\":\"09:30\",\"end\":\"20:00\"}]},\"contact\":{\"supportName\":\"IT Helpdesk\",\"supportEmail\":\"it@yourcompany.com\"}}"

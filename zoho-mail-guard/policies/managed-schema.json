@@ -1,0 +1,100 @@
+{
+  "type": "object",
+  "properties": {
+    "policy": {
+      "title": "Zoho Mail Guard policy",
+      "description": "Rules pushed by IT. Anything set here overrides the local settings page and is shown there as read-only.",
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "mode": { "type": "string", "enum": ["enforce", "monitor"] },
+        "protectedHosts": { "type": "array", "items": { "type": "string" } },
+        "signinHosts": { "type": "array", "items": { "type": "string" } },
+        "allowedAccountDomains": { "type": "array", "items": { "type": "string" } },
+        "allowedAccounts": { "type": "array", "items": { "type": "string" } },
+        "blockedAccounts": { "type": "array", "items": { "type": "string" } },
+        "accountSelectors": { "type": "array", "items": { "type": "string" } },
+        "device": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean" },
+            "approved": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" },
+                  "addedAt": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "blockIncognito": { "type": "boolean" },
+            "allowedProfileEmails": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "timezone": { "type": "string" },
+            "days": { "type": "array", "items": { "type": "integer" } },
+            "windows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "start": { "type": "string" },
+                  "end": { "type": "string" }
+                }
+              }
+            },
+            "holidays": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "lookupUrl": { "type": "string" },
+            "allowedIps": { "type": "array", "items": { "type": "string" } },
+            "allowedCidrs": { "type": "array", "items": { "type": "string" } },
+            "cacheMinutes": { "type": "integer" },
+            "failOpen": { "type": "boolean" }
+          }
+        },
+        "restrictions": {
+          "type": "object",
+          "properties": {
+            "blockAttachmentDownloads": { "type": "boolean" },
+            "blockCopy": { "type": "boolean" },
+            "blockPrint": { "type": "boolean" },
+            "watermark": { "type": "boolean" },
+            "watermarkText": { "type": "string" }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "supportName": { "type": "string" },
+            "supportEmail": { "type": "string" },
+            "note": { "type": "string" }
+          }
+        },
+        "audit": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "maxEntries": { "type": "integer" },
+            "logAllowed": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

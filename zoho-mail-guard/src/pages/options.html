@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zoho Mail Guard — Admin settings</title>
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <!-- Lock screen -->
+    <div id="lock" class="lock">
+      <form class="card lockCard" id="lockForm">
+        <h1>Admin settings are locked</h1>
+        <p class="muted small">
+          Enter the admin PIN to change how company mail is controlled on this device.
+        </p>
+        <label class="field">
+          <span>Admin PIN</span>
+          <input type="password" id="pinInput" autocomplete="current-password" />
+        </label>
+        <p class="small err" id="lockError" hidden></p>
+        <button type="submit">Unlock</button>
+      </form>
+    </div>
+
+    <main id="app" hidden>
+      <header class="topbar">
+        <div>
+          <h1>Zoho Mail Guard</h1>
+          <p class="small muted">Company email access control for this Chrome profile</p>
+        </div>
+        <div class="row">
+          <span class="pill" id="statusPill">…</span>
+          <button class="secondary" id="lockBtn" type="button">Lock</button>
+        </div>
+      </header>
+
+      <div class="banner" id="managedBanner" hidden>
+        <strong>Managed by enterprise policy.</strong>
+        <span id="managedList"></span>
+        Settings pushed by IT are shown here but cannot be edited on this machine.
+      </div>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-panel="general" type="button">General</button>
+        <button class="tab" data-panel="accounts" type="button">Accounts</button>
+        <button class="tab" data-panel="devices" type="button">Devices</button>
+        <button class="tab" data-panel="schedule" type="button">Schedule</button>
+        <button class="tab" data-panel="network" type="button">Network</button>
+        <button class="tab" data-panel="restrictions" type="button">Restrictions</button>
+        <button class="tab" data-panel="advanced" type="button">Advanced</button>
+        <button class="tab" data-panel="audit" type="button">Audit log</button>
+      </nav>
+
+      <!-- General ------------------------------------------------------- -->
+      <section class="panel active" data-panel="general">
+        <div class="card">
+          <h2>Guard state</h2>
+          <label class="check">
+            <input type="checkbox" data-path="enabled" />
+            <span
+              ><strong>Guard enabled</strong><br /><span class="muted small"
+                >Turn everything off without uninstalling.</span
+              ></span
+            >
+          </label>
+          <label class="field">
+            <span>Mode</span>
+            <select data-path="mode">
+              <option value="enforce">Enforce — actually block</option>
+              <option value="monitor">Monitor only — log, never block</option>
+            </select>
+          </label>
+          <p class="small muted">
+            Start a rollout in <strong>Monitor only</strong> for a week, read the audit log, then
+            switch to Enforce once nothing legitimate is being caught.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Help text on the blocked page</h2>
+          <div class="grid2">
+            <label class="field"
+              ><span>Support team name</span
+              ><input type="text" data-path="contact.supportName" placeholder="IT Helpdesk"
+            /></label>
+            <label class="field"
+              ><span>Support email</span
+              ><input type="text" data-path="contact.supportEmail" placeholder="it@company.com"
+            /></label>
+          </div>
+          <label class="field"
+            ><span>Extra note</span
+            ><input type="text" data-path="contact.note" placeholder="Ext. 204, Mon–Sat 9–7"
+          /></label>
+        </div>
+
+        <div class="card">
+          <h2>Admin PIN</h2>
+          <p class="small muted" id="pinState"></p>
+          <div class="grid2">
+            <label class="field"
+              ><span>New PIN (min 4 characters)</span
+              ><input type="password" id="newPin" autocomplete="new-password"
+            /></label>
+            <label class="field"
+              ><span>Repeat PIN</span
+              ><input type="password" id="newPin2" autocomplete="new-password"
+            /></label>
+          </div>
+          <div class="row">
+            <button id="savePin" type="button">Save PIN</button>
+            <button id="clearPin" class="secondary" type="button">Remove PIN</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accounts ------------------------------------------------------ -->
+      <section class="panel" data-panel="accounts">
+        <div class="card">
+          <h2>Company accounts only</h2>
+          <p class="small muted">
+            Any Zoho mailbox outside these domains is blocked, and the sign-in page refuses to
+            submit it. Leave empty to allow any account.
+          </p>
+          <label class="field"
+            ><span>Allowed email domains — one per line</span
+            ><textarea
+              data-path="allowedAccountDomains"
+              data-list
+              placeholder="company.com&#10;company.in"
+            ></textarea>
+          </label>
+          <div class="grid2">
+            <label class="field"
+              ><span>Always allow these mailboxes</span
+              ><textarea
+                data-path="allowedAccounts"
+                data-list
+                placeholder="auditor@partner.com"
+              ></textarea>
+            </label>
+            <label class="field"
+              ><span>Never allow these mailboxes</span
+              ><textarea
+                data-path="blockedAccounts"
+                data-list
+                placeholder="exemployee@company.com"
+              ></textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Devices ------------------------------------------------------- -->
+      <section class="panel" data-panel="devices">
+        <div class="card">
+          <h2>This device</h2>
+          <dl class="kv">
+            <dt>Device ID</dt>
+            <dd class="mono" id="thisDeviceId">—</dd>
+            <dt>Registered</dt>
+            <dd id="thisDeviceCreated">—</dd>
+          </dl>
+          <label class="field"
+            ><span>Device name</span
+            ><input type="text" id="deviceLabel" placeholder="Reception laptop — Dell 5410"
+          /></label>
+          <div class="row">
+            <button id="saveDeviceLabel" class="secondary" type="button">Save name</button>
+            <button id="approveThis" type="button">Approve this device</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Approved devices</h2>
+          <label class="check">
+            <input type="checkbox" data-path="device.required" />
+            <span
+              ><strong>Only approved devices may open company mail</strong><br /><span
+                class="muted small"
+                >With this off, the device list is informational only.</span
+              ></span
+            >
+          </label>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Device ID</th>
+                  <th>Added</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="deviceRows"></tbody>
+            </table>
+          </div>
+          <div class="row addRow">
+            <input type="text" id="newDeviceId" placeholder="Device ID from the employee's popup" />
+            <input type="text" id="newDeviceLabel" placeholder="Device name" />
+            <button id="addDevice" class="secondary" type="button">Add</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Chrome profile</h2>
+          <label class="check">
+            <input type="checkbox" data-path="profile.blockIncognito" />
+            <span>Block Incognito and Guest windows</span>
+          </label>
+          <label class="field"
+            ><span>Allowed Chrome profile emails — one per line (empty = any profile)</span
+            ><textarea
+              data-path="profile.allowedProfileEmails"
+              data-list
+              placeholder="staff@company.com"
+            ></textarea>
+          </label>
+          <p class="small muted" id="identityState"></p>
+          <button id="grantIdentity" class="secondary" type="button">
+            Grant profile-email permission
+          </button>
+        </div>
+      </section>
+
+      <!-- Schedule ------------------------------------------------------ -->
+      <section class="panel" data-panel="schedule">
+        <div class="card">
+          <h2>Working hours</h2>
+          <label class="check">
+            <input type="checkbox" data-path="schedule.enabled" />
+            <span>Only allow company mail during the hours below</span>
+          </label>
+          <label class="field"
+            ><span>Timezone (IANA, e.g. Asia/Kolkata — empty uses the laptop's clock)</span
+            ><input type="text" data-path="schedule.timezone" placeholder="Asia/Kolkata"
+          /></label>
+          <span class="fieldLabel">Working days</span>
+          <div class="row days" id="days"></div>
+          <span class="fieldLabel">Time windows</span>
+          <div id="windows"></div>
+          <button id="addWindow" class="secondary" type="button">Add window</button>
+          <label class="field topGap"
+            ><span>Holidays / non-working dates — one YYYY-MM-DD per line</span
+            ><textarea
+              data-path="schedule.holidays"
+              data-list
+              placeholder="2026-01-26&#10;2026-08-15"
+            ></textarea>
+          </label>
+        </div>
+      </section>
+
+      <!-- Network ------------------------------------------------------- -->
+      <section class="panel" data-panel="network">
+        <div class="card">
+          <h2>Office network check</h2>
+          <p class="small muted">
+            The extension asks a lookup service for this machine's public IP and compares it with
+            your list. Useful when the office has a static IP or everyone connects through a VPN.
+          </p>
+          <label class="check">
+            <input type="checkbox" data-path="network.enabled" />
+            <span>Only allow company mail from approved networks</span>
+          </label>
+          <dl class="kv">
+            <dt>Current IP</dt>
+            <dd class="mono" id="currentIp">—</dd>
+          </dl>
+          <div class="row">
+            <button id="refreshIp" class="secondary" type="button">Refresh</button>
+            <button id="addCurrentIp" class="secondary" type="button">Add current IP</button>
+          </div>
+          <div class="grid2 topGap">
+            <label class="field"
+              ><span>Allowed IPv4 addresses — one per line</span
+              ><textarea
+                data-path="network.allowedIps"
+                data-list
+                placeholder="203.0.113.10"
+              ></textarea>
+            </label>
+            <label class="field"
+              ><span>Allowed IPv4 ranges (CIDR) — one per line</span
+              ><textarea
+                data-path="network.allowedCidrs"
+                data-list
+                placeholder="203.0.113.0/24"
+              ></textarea>
+            </label>
+          </div>
+          <div class="grid2">
+            <label class="field"
+              ><span>Lookup URL</span><input type="text" data-path="network.lookupUrl"
+            /></label>
+            <label class="field"
+              ><span>Cache lookup for (minutes)</span
+              ><input type="number" min="1" max="240" data-path="network.cacheMinutes"
+            /></label>
+          </div>
+          <label class="check">
+            <input type="checkbox" data-path="network.failOpen" />
+            <span
+              >If the IP lookup fails, keep access (recommended — otherwise a lookup outage locks
+              everyone out)</span
+            >
+          </label>
+        </div>
+      </section>
+
+      <!-- Restrictions -------------------------------------------------- -->
+      <section class="panel" data-panel="restrictions">
+        <div class="card">
+          <h2>Data-leak controls</h2>
+          <label class="check">
+            <input type="checkbox" data-path="restrictions.blockAttachmentDownloads" />
+            <span>Block attachment downloads from company mail</span>
+          </label>
+          <p class="small muted" id="downloadsState"></p>
+          <button id="grantDownloads" class="secondary" type="button">
+            Grant downloads permission
+          </button>
+          <hr />
+          <label class="check">
+            <input type="checkbox" data-path="restrictions.blockCopy" />
+            <span>Block copy / cut inside the mail UI (compose box stays usable)</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" data-path="restrictions.blockPrint" />
+            <span>Block printing and Ctrl+P</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" data-path="restrictions.watermark" />
+            <span>Show a screen watermark with the account and device name</span>
+          </label>
+          <label class="field"
+            ><span>Watermark text — {account} and {device} are replaced</span
+            ><input type="text" data-path="restrictions.watermarkText"
+          /></label>
+        </div>
+      </section>
+
+      <!-- Advanced ------------------------------------------------------ -->
+      <section class="panel" data-panel="advanced">
+        <div class="card">
+          <h2>Protected addresses</h2>
+          <p class="small muted">
+            Hosts the guard applies to. Subdomains of each entry are covered automatically.
+          </p>
+          <div class="grid2">
+            <label class="field"
+              ><span>Mailbox hosts</span><textarea data-path="protectedHosts" data-list></textarea>
+            </label>
+            <label class="field"
+              ><span>Sign-in hosts</span><textarea data-path="signinHosts" data-list></textarea>
+            </label>
+          </div>
+          <label class="field"
+            ><span>Account detection selectors (CSS, one per line)</span
+            ><textarea data-path="accountSelectors" data-list></textarea>
+          </label>
+        </div>
+
+        <div class="card">
+          <h2>Audit settings</h2>
+          <label class="check">
+            <input type="checkbox" data-path="audit.enabled" /><span>Keep an audit log</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" data-path="audit.logAllowed" /><span
+              >Also record allowed openings, not just blocks</span
+            >
+          </label>
+          <label class="field"
+            ><span>Maximum entries kept</span
+            ><input type="number" min="20" max="5000" data-path="audit.maxEntries"
+          /></label>
+        </div>
+
+        <div class="card">
+          <h2>Backup and rollout</h2>
+          <p class="small muted">
+            Export the policy to review it, or to paste into the enterprise policy file so every
+            laptop gets the same rules. The admin PIN hash is never exported.
+          </p>
+          <div class="row">
+            <button id="exportPolicy" class="secondary" type="button">Export policy JSON</button>
+            <button id="importPolicy" class="secondary" type="button">Import policy JSON</button>
+            <button id="resetPolicy" class="danger" type="button">Reset to defaults</button>
+          </div>
+          <textarea id="policyJson" class="topGap" spellcheck="false"></textarea>
+        </div>
+      </section>
+
+      <!-- Audit --------------------------------------------------------- -->
+      <section class="panel" data-panel="audit">
+        <div class="card">
+          <div class="row spread">
+            <h2>Audit log</h2>
+            <div class="row">
+              <button id="exportCsv" class="secondary" type="button">Export CSV</button>
+              <button id="clearLog" class="danger" type="button">Clear</button>
+            </div>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Result</th>
+                  <th>Reason</th>
+                  <th>Account</th>
+                  <th>Device</th>
+                  <th>IP</th>
+                </tr>
+              </thead>
+              <tbody id="auditRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="saveBar" id="saveBar" hidden>
+        <span>Unsaved changes</span>
+        <div class="row">
+          <button class="secondary" id="discard" type="button">Discard</button>
+          <button id="save" type="button">Save changes</button>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

@@ -1,0 +1,125 @@
+/* Injected on every Zoho page. Everything is namespaced with zmg- and only
+   becomes visible once the content script adds the matching element/class. */
+
+#zmg-watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 60px 90px;
+  transform: rotate(-24deg) scale(1.6);
+  transform-origin: center;
+  opacity: 0.075;
+}
+
+#zmg-watermark span {
+  font:
+    600 15px/1.2 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  letter-spacing: 0.14em;
+  color: #111;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+#zmg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+#zmg-overlay.zmg-visible {
+  display: flex;
+}
+
+#zmg-overlay .zmg-card {
+  max-width: 460px;
+  margin: 24px;
+  padding: 28px 30px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  font:
+    14px/1.55 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  color: #1f2933;
+}
+
+#zmg-overlay h1 {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 650;
+  color: #b3261e;
+}
+
+#zmg-overlay p {
+  margin: 0 0 20px;
+}
+
+#zmg-overlay button {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #1a4fd6;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#zmg-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 2147483600;
+  transform: translate(-50%, 12px);
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: #1f2933;
+  color: #fff;
+  font:
+    500 13px/1.4 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+#zmg-toast.zmg-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media print {
+  html.zmg-block-print body {
+    display: none !important;
+  }
+
+  html.zmg-block-print::after {
+    content: 'Printing company mail is disabled by IT policy.';
+    display: block;
+    padding: 48px;
+    font:
+      600 16px/1.5 system-ui,
+      sans-serif;
+  }
+}

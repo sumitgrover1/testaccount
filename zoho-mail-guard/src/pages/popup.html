@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Zoho Mail Guard</title>
+    <link rel="stylesheet" href="ui.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <strong>Zoho Mail Guard</strong>
+      <span class="pill" id="modePill">…</span>
+    </header>
+
+    <section class="card">
+      <div class="row spread">
+        <h2>This tab</h2>
+        <span class="pill" id="tabPill">…</span>
+      </div>
+      <p class="small muted" id="tabReason">Checking…</p>
+      <ul class="checks" id="checks"></ul>
+    </section>
+
+    <section class="card">
+      <h2>This device</h2>
+      <dl class="kv">
+        <dt>Name</dt>
+        <dd id="deviceLabel">—</dd>
+        <dt>Device ID</dt>
+        <dd class="mono" id="deviceId">—</dd>
+        <dt>Account</dt>
+        <dd class="mono" id="account">—</dd>
+        <dt>Network</dt>
+        <dd class="mono" id="network">—</dd>
+      </dl>
+      <div class="row">
+        <button id="copyId" class="secondary" type="button">Copy Device ID</button>
+        <button id="recheck" class="secondary" type="button">Re-check now</button>
+      </div>
+    </section>
+
+    <footer>
+      <button id="options" type="button">Admin settings</button>
+      <span class="small muted" id="managedNote"></span>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
