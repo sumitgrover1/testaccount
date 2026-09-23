@@ -1,5 +1,6 @@
 import { FollowUpStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
+import { env } from '../../config/env';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/AppError';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
 import { notificationProvider } from '../../common/providers/notification.provider';
@@ -147,10 +148,16 @@ export async function sendReminder(id: string) {
   const recipient = followUp.lead ?? followUp.patient;
   if (!recipient) throw new BadRequestError('Follow-up has no associated lead or patient');
 
+  const message = followUp.notes ?? `Reminder: follow up with ${recipient.fullName}`;
+
   return notificationProvider.send({
     channel: followUp.channel,
     to: recipient.mobileNumber,
-    message: followUp.notes ?? `Reminder: follow up with ${recipient.fullName}`,
+    message,
+    // See README.md's WhatsApp setup section for the exact approved body
+    // text — params here are positional and must match its {{1}}, {{2}}.
+    templateName: env.WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE,
+    templateParams: [recipient.fullName, message],
   });
 }
 

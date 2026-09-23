@@ -630,6 +630,10 @@ model Appointment {
   rescheduledFromId String?           @unique
   rescheduledFrom   Appointment?      @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
   rescheduledTo     Appointment?      @relation("AppointmentReschedule")
+  // Set once a WhatsApp/notification reminder has actually been sent for
+  // this appointment — lets sendDueReminders() skip appointments it already
+  // reminded on a previous run instead of re-sending on every cron tick.
+  reminderSentAt    DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 

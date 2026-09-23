@@ -74,5 +74,16 @@ router.post(
   validate({ params: idParamSchema, body: rescheduleAppointmentSchema }),
   appointmentController.rescheduleAppointment,
 );
+router.post(
+  '/:id/send-reminder',
+  authorize(...SCHEDULERS),
+  validate({ params: idParamSchema }),
+  appointmentController.sendReminder,
+);
+router.post(
+  '/send-due-reminders',
+  authorize(...ADMIN_ROLES),
+  appointmentController.sendDueReminders,
+);
 
 export default router;

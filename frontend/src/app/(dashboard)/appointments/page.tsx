@@ -66,12 +66,20 @@ function ActionButtons({ appointment }: { appointment: Appointment }) {
     },
     onError,
   });
+  const reminder = useMutation({
+    mutationFn: () => appointmentsApi.sendReminder(appointment.id),
+    onSuccess: () => showSuccess('Reminder sent'),
+    onError,
+  });
 
   if (appointment.status === 'BOOKED') {
     return (
       <div className="flex gap-2">
         <Button size="sm" onClick={() => checkIn.mutate()} isLoading={checkIn.isPending}>
           Check in
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => reminder.mutate()} isLoading={reminder.isPending}>
+          Send reminder
         </Button>
         <Button size="sm" variant="ghost" onClick={() => noShow.mutate()} isLoading={noShow.isPending}>
           No-show

@@ -268,15 +268,67 @@ doesn't have:
   Document AI / AWS Textract / Azure Form Recognizer by implementing
   `OcrProvider` and swapping the export.
 - **Notifications** (`src/common/providers/notification.provider.ts`) — call/
-  WhatsApp/SMS/email reminders. `ConsoleNotificationProvider` logs instead of
-  sending; plug in Twilio/Gupshup/SendGrid the same way.
+  WhatsApp/SMS/email reminders. WhatsApp is real, via the Meta Cloud API,
+  once `WHATSAPP_ACCESS_TOKEN`/`WHATSAPP_PHONE_NUMBER_ID` are set (see
+  "WhatsApp automation" below); CALL/SMS/EMAIL still just log —
+  `ConsoleNotificationProvider` is the fallback for all of these until a
+  provider (Twilio/Gupshup/SendGrid) is plugged in the same way.
 - **Ad-platform webhooks** (`src/modules/marketing/webhook.controller.ts`) —
   signature verification and lead ingestion are real; the vendor-specific
   payload shape (e.g. Facebook's leadgen_id → Graph API fetch) needs each
   platform's live app credentials to complete.
-- **Follow-up scheduling** — `followup.service.ts` exposes `sendReminder` and
-  `markOverdueAsMissed` for an external scheduler (cron/queue) to call; no
-  in-process scheduler is bundled.
+- **Follow-up & appointment reminder scheduling** — `followup.service.ts`
+  exposes `sendReminder`/`markOverdueAsMissed`, and `appointment.service.ts`
+  exposes `sendReminder`/`sendDueReminders`, for an external scheduler
+  (cron/queue) to call; no in-process scheduler is bundled.
+
+### WhatsApp automation (appointment reminders + lead follow-up nudges)
+
+WhatsApp reminders go through the official **Meta Cloud API** — business-
+initiated messages (which reminders always are) must use a pre-approved
+message *template*, not freeform text, so there's a one-time setup step in
+Meta Business Manager before this works.
+
+1. Create a Meta Business Account and a WhatsApp Business Account (WABA),
+   add/verify a phone number, and generate a permanent access token for a
+   System User with `whatsapp_business_messaging` permission — see
+   [Meta's Cloud API getting-started guide](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started).
+2. In Meta Business Manager → WhatsApp Manager → Message Templates, create
+   these two **Utility**-category templates and submit them for approval
+   (approval is usually near-instant to a few hours):
+
+   | Template name | Body text |
+   | --- | --- |
+   | `appointment_reminder` | `Hi {{1}}, this is a reminder for your appointment at Lumine Aesthetics on {{2}} at {{3}}. Reply here if you need to reschedule.` |
+   | `lead_followup_reminder` | `Hi {{1}}, this is a quick follow-up from Lumine Aesthetics. {{2}} Feel free to reply here or call us anytime.` |
+
+   The `{{n}}` placeholders are positional and must match what the code
+   sends — don't reword them without also updating `appointment.service.ts`
+   (`sendReminder`/`sendDueReminders`) and `followup.service.ts`
+   (`sendReminder`) accordingly.
+3. Set `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` (from WhatsApp
+   Manager → API Setup) in `.env`. The template names/language above are
+   the defaults — override `WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE` /
+   `WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE` / `WHATSAPP_TEMPLATE_LANGUAGE` if
+   you name or localize yours differently.
+4. Trigger sends from an external scheduler (there's no in-process cron):
+   - `POST /api/v1/appointments/send-due-reminders` — bulk-reminds every
+     `BOOKED` appointment in the next 24h that hasn't been reminded yet
+     (safe to call hourly; already-reminded appointments are skipped via
+     `Appointment.reminderSentAt`).
+   - `POST /api/v1/appointments/:id/send-reminder` and
+     `POST /api/v1/followups/:id/send-reminder` — for a single item, e.g. a
+     "remind now" button in the admin panel.
+   - `POST /api/v1/followups/mark-overdue` — existing follow-up module,
+     unrelated to WhatsApp but the same "call periodically" pattern.
+
+   On the VPS, the simplest way to do this is a `crontab -e` entry that
+   `curl`s these endpoints with a staff/service account's bearer token on a
+   schedule (e.g. hourly).
+
+Until `WHATSAPP_ACCESS_TOKEN`/`WHATSAPP_PHONE_NUMBER_ID` are set, every
+WhatsApp send just logs instead of sending — safe to leave unconfigured in
+development.
 
 None of this blocks everyday clinic operations (patients, leads, treatments,
 pricing, enrollments, appointments, inventory, billing all work end-to-end
