@@ -70,6 +70,27 @@ const envSchema = z.object({
   // long enough for the cached refresh to lapse past 60 days.
   INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
 
+  // WhatsApp Business Platform (Meta Cloud API), used by the notification
+  // provider (see notification.provider.ts) to send appointment reminders
+  // and lead follow-up nudges. Optional — until both the token and phone
+  // number ID are set, WhatsApp-channel sends fall back to logging only,
+  // same as every other unconfigured channel. Business-initiated messages
+  // (i.e. everything sent here) must use a pre-approved message template —
+  // freeform text is only allowed as a *reply* within an existing 24h
+  // customer-service session, which doesn't apply to reminders we send.
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  WHATSAPP_API_VERSION: z.string().default('v21.0'),
+  // Language code the templates below were approved in Meta Business
+  // Manager under (e.g. "en_US", "en", "hi").
+  WHATSAPP_TEMPLATE_LANGUAGE: z.string().default('en_US'),
+  // Template names as registered (and approved) in Meta Business Manager —
+  // see README.md's WhatsApp setup section for the exact body text to
+  // submit for each one, so the {{n}} placeholders line up with the
+  // parameters the code actually sends.
+  WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE: z.string().default('appointment_reminder'),
+  WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE: z.string().default('lead_followup_reminder'),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

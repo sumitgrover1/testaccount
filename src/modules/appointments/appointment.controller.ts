@@ -66,3 +66,14 @@ export const rescheduleAppointment = asyncHandler(async (req: Request, res: Resp
   const appointment = await appointmentService.rescheduleAppointment(id, input, req.user!.id);
   res.status(201).json({ data: appointment });
 });
+
+export const sendReminder = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params as unknown as IdParam;
+  const result = await appointmentService.sendReminder(id);
+  res.status(200).json({ data: result });
+});
+
+export const sendDueReminders = asyncHandler(async (_req: Request, res: Response) => {
+  const result = await appointmentService.sendDueReminders();
+  res.status(200).json({ data: result });
+});

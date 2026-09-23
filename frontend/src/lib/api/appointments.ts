@@ -64,3 +64,8 @@ export async function rescheduleAppointment(
   const res = await apiClient.post<ApiEnvelope<Appointment>>(`/appointments/${id}/reschedule`, input);
   return res.data.data;
 }
+
+export async function sendReminder(id: string) {
+  const res = await apiClient.post(`/appointments/${id}/send-reminder`);
+  return res.data.data;
+}

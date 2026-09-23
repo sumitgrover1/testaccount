@@ -87,7 +87,7 @@ defends against:
 These are explicitly out of scope for this initial build and should be
 addressed before handling real patient data in production:
 
-- **OCR and notification providers are stubs** (`src/common/providers/`) — no real supplier-invoice OCR engine or SMS/WhatsApp/email provider is wired up; both need real vendor credentials this environment doesn't have. See README's "Integration points not wired to a live provider" for what's real vs. stubbed.
+- **OCR and most notification channels are still stubs** (`src/common/providers/`) — no real supplier-invoice OCR engine or SMS/CALL/EMAIL provider is wired up; these need real vendor credentials this environment doesn't have. WhatsApp is the exception — it's wired to the real Meta Cloud API once `WHATSAPP_ACCESS_TOKEN`/`WHATSAPP_PHONE_NUMBER_ID` are configured. See README's "WhatsApp automation" and "Integration points not wired to a live provider" sections for what's real vs. stubbed.
 - **Ad-platform webhook payload parsing is normalized, not vendor-native** — Facebook/Google's actual webhook formats (e.g. Facebook sends only a `leadgen_id` requiring a signed Graph API fetch) aren't implemented; only signature verification and lead ingestion are real.
 - Email delivery for password-reset is stubbed (the service computes the token but does not send it) — wire up a transactional email provider.
 - No field-level encryption for at-rest PII/medical data beyond what the database/disk provides — evaluate based on your actual compliance target (a clinic handling real patient data should assess HIPAA-equivalent, India's DPDP Act, or other applicable regimes).

@@ -1,7 +1,9 @@
 import { AppointmentStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
+import { env } from '../../config/env';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/AppError';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
+import { notificationProvider } from '../../common/providers/notification.provider';
 import type {
   CancelAppointmentInput,
   CreateAppointmentInput,
@@ -261,4 +263,96 @@ export async function rescheduleAppointment(
   });
 
   return newAppointment;
+}
+
+function formatAppointmentDateTime(date: Date): { date: string; time: string } {
+  return {
+    date: date.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+    time: date.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
+  };
+}
+
+/// Sends a WhatsApp reminder for one appointment and records reminderSentAt
+/// on success, so a later sendDueReminders() run won't re-send it. Intended
+/// to be called on demand by staff, mirroring the follow-up module's
+/// per-item send-reminder endpoint.
+export async function sendReminder(id: string) {
+  const appointment = await prisma.appointment.findUnique({
+    where: { id },
+    include: { patient: { select: { id: true, fullName: true, mobileNumber: true } } },
+  });
+  if (!appointment) throw new NotFoundError('Appointment not found');
+  if (appointment.status !== AppointmentStatus.BOOKED) {
+    throw new ConflictError('Only booked appointments can be reminded');
+  }
+
+  const { date, time } = formatAppointmentDateTime(appointment.scheduledDate);
+  const result = await notificationProvider.send({
+    channel: 'WHATSAPP',
+    to: appointment.patient.mobileNumber,
+    message: `Reminder: your appointment at Lumine Aesthetics is on ${date} at ${time}.`,
+    // See README.md's WhatsApp setup section for the exact approved body
+    // text — params here are positional and must match its {{1}}/{{2}}/{{3}}.
+    templateName: env.WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE,
+    templateParams: [appointment.patient.fullName, date, time],
+  });
+
+  if (result.success) {
+    await prisma.appointment.update({ where: { id }, data: { reminderSentAt: new Date() } });
+  }
+
+  return result;
+}
+
+/// Bulk-sends WhatsApp reminders for every BOOKED appointment scheduled
+/// within the next REMINDER_WINDOW_HOURS that hasn't been reminded yet.
+/// Meant to run periodically from an external scheduler — this codebase has
+/// no in-process cron, same as followup.service.ts's markOverdueAsMissed.
+const REMINDER_WINDOW_HOURS = 24;
+
+export async function sendDueReminders() {
+  const windowEnd = new Date(Date.now() + REMINDER_WINDOW_HOURS * 60 * 60 * 1000);
+  const dueAppointments = await prisma.appointment.findMany({
+    where: {
+      status: AppointmentStatus.BOOKED,
+      reminderSentAt: null,
+      scheduledDate: { gte: new Date(), lte: windowEnd },
+    },
+    include: { patient: { select: { id: true, fullName: true, mobileNumber: true } } },
+  });
+
+  let sent = 0;
+  let failed = 0;
+  for (const appointment of dueAppointments) {
+    const { date, time } = formatAppointmentDateTime(appointment.scheduledDate);
+    const result = await notificationProvider.send({
+      channel: 'WHATSAPP',
+      to: appointment.patient.mobileNumber,
+      message: `Reminder: your appointment is on ${date} at ${time}.`,
+      templateName: env.WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE,
+      templateParams: [appointment.patient.fullName, date, time],
+    });
+
+    if (result.success) {
+      await prisma.appointment.update({
+        where: { id: appointment.id },
+        data: { reminderSentAt: new Date() },
+      });
+      sent += 1;
+    } else {
+      failed += 1;
+    }
+  }
+
+  return { checked: dueAppointments.length, sent, failed };
 }
