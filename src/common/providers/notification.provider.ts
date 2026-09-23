@@ -51,6 +51,44 @@ interface WhatsAppSendResponse {
   error?: { message: string };
 }
 
+// Shared low-level sender for both proactive template messages (reminders)
+// and freeform text replies (the WhatsApp bot — see whatsappBot.service.ts)
+// — same endpoint/auth, just a different `type` payload.
+async function postToWhatsAppGraphApi(
+  payload: Record<string, unknown>,
+): Promise<NotificationResult> {
+  const url = `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messaging_product: 'whatsapp', ...payload }),
+    });
+
+    const body = (await res.json()) as WhatsAppSendResponse;
+
+    if (!res.ok) {
+      logger.error({ status: res.status, body }, 'WhatsApp message send failed');
+      return { success: false, error: body.error?.message ?? `HTTP ${res.status}` };
+    }
+
+    return { success: true, providerRef: body.messages?.[0]?.id };
+  } catch (err) {
+    logger.error({ err }, 'WhatsApp message send threw');
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// Meta expects the recipient in international format without a leading "+"
+// or any separators (e.g. "919876543210").
+function toWhatsAppRecipient(to: string): string {
+  return to.replace(/[^\d]/g, '');
+}
+
 // Sends a WhatsApp template message via the Meta Cloud API:
 // https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates
 export class WhatsAppCloudApiProvider implements NotificationProvider {
@@ -60,52 +98,47 @@ export class WhatsAppCloudApiProvider implements NotificationProvider {
       return { success: false, error: 'WhatsApp requires an approved templateName' };
     }
 
-    // Meta expects the recipient in international format without a leading
-    // "+" or any separators (e.g. "919876543210").
-    const to = message.to.replace(/[^\d]/g, '');
-    const url = `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to,
-          type: 'template',
-          template: {
-            name: message.templateName,
-            language: { code: env.WHATSAPP_TEMPLATE_LANGUAGE },
-            ...(message.templateParams?.length
-              ? {
-                  components: [
-                    {
-                      type: 'body',
-                      parameters: message.templateParams.map((text) => ({ type: 'text', text })),
-                    },
-                  ],
-                }
-              : {}),
-          },
-        }),
-      });
-
-      const body = (await res.json()) as WhatsAppSendResponse;
-
-      if (!res.ok) {
-        logger.error({ status: res.status, body }, 'WhatsApp message send failed');
-        return { success: false, error: body.error?.message ?? `HTTP ${res.status}` };
-      }
-
-      return { success: true, providerRef: body.messages?.[0]?.id };
-    } catch (err) {
-      logger.error({ err }, 'WhatsApp message send threw');
-      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
-    }
+    return postToWhatsAppGraphApi({
+      to: toWhatsAppRecipient(message.to),
+      type: 'template',
+      template: {
+        name: message.templateName,
+        language: { code: env.WHATSAPP_TEMPLATE_LANGUAGE },
+        ...(message.templateParams?.length
+          ? {
+              components: [
+                {
+                  type: 'body',
+                  parameters: message.templateParams.map((text) => ({ type: 'text', text })),
+                },
+              ],
+            }
+          : {}),
+      },
+    });
   }
+}
+
+// Sends a freeform text WhatsApp message — only deliverable as a *reply*
+// within an existing 24h customer-service session (i.e. the customer
+// messaged first), unlike the template-only sends above which can be
+// business-initiated at any time. Used by the WhatsApp bot to reply to an
+// inbound message; not exposed through the NotificationProvider interface
+// since it has a narrower, session-scoped precondition the generic
+// reminder-sending callers don't account for.
+export async function sendWhatsAppFreeformText(
+  to: string,
+  text: string,
+): Promise<NotificationResult> {
+  if (!env.WHATSAPP_ACCESS_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
+    logger.warn({ to }, 'WhatsApp freeform send skipped — WhatsApp Cloud API not configured');
+    return { success: false, error: 'WhatsApp Cloud API not configured' };
+  }
+  return postToWhatsAppGraphApi({
+    to: toWhatsAppRecipient(to),
+    type: 'text',
+    text: { body: text },
+  });
 }
 
 const consoleProvider = new ConsoleNotificationProvider();

@@ -91,6 +91,29 @@ const envSchema = z.object({
   WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE: z.string().default('appointment_reminder'),
   WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE: z.string().default('lead_followup_reminder'),
 
+  // Inbound WhatsApp automation (see whatsappBot module) — an Instagram-
+  // originated lead's WhatsApp message gets an AI-drafted reply, sent as a
+  // freeform text (allowed as a *reply* within an existing 24h customer-
+  // service session, unlike the proactive template sends above). Optional —
+  // without WHATSAPP_WEBHOOK_VERIFY_TOKEN, Meta's webhook subscription
+  // handshake fails closed and inbound messages are never processed; without
+  // ANTHROPIC_API_KEY, every inbound message is escalated to staff instead
+  // of auto-replied (see whatsappBot.service.ts).
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
+  // Meta app secret (not the WhatsApp access token) — verifies the
+  // X-Hub-Signature-256 header on inbound webhook deliveries. Optional but
+  // strongly recommended in production; without it, inbound payloads are
+  // processed unverified (only fine for local testing).
+  WHATSAPP_APP_SECRET: z.string().optional(),
+  // Escalated conversations (medical questions, complaints, anything the AI
+  // isn't confident about) become a PENDING FollowUp assigned to this staff
+  // member's email; falls back to the first COUNSELOR/RECEPTIONIST found,
+  // then the first SUPER_ADMIN, if unset or not found.
+  WHATSAPP_BOT_ESCALATION_ASSIGNEE_EMAIL: z.string().optional(),
+
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default('claude-sonnet-5'),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

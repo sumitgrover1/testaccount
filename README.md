@@ -214,8 +214,9 @@ a step-by-step guide using cPanel's Node.js Selector instead.
 
 ## Public (unauthenticated) endpoints
 
-Four endpoints intentionally sit outside the auth wall, for the public
-marketing website (`website/`) — everything else requires a staff login:
+These endpoints intentionally sit outside the auth wall, for the public
+marketing website (`website/`) and third-party webhook deliveries —
+everything else requires a staff login:
 
 - `GET /api/v1/treatments/public-list` — active treatments only, limited to
   name/category/description/duration/sessions (no pricing — this clinic's
@@ -256,6 +257,14 @@ marketing website (`website/`) — everything else requires a staff login:
   panel's Blog page, including free-form tags (find-or-created by name) in
   addition to the fixed `category` — draft articles never appear on either
   public endpoint until published.
+- `GET/POST /api/v1/whatsapp/webhook` — Meta's WhatsApp Cloud API webhook
+  (subscription handshake + inbound message delivery). Unauthenticated like
+  the marketing ad-platform webhooks below, but POST deliveries are
+  signature-verified (`WHATSAPP_APP_SECRET`) rather than JWT-protected,
+  since Meta is the caller, not a staff user. See "Instagram → WhatsApp AI
+  auto-reply" above.
+- `POST /api/v1/marketing/webhooks/facebook`, `POST /api/v1/marketing/webhooks/google`
+  — ad-platform lead webhooks, signature-verified per-platform.
 
 ## Integration points not wired to a live provider
 
@@ -329,6 +338,58 @@ Meta Business Manager before this works.
 Until `WHATSAPP_ACCESS_TOKEN`/`WHATSAPP_PHONE_NUMBER_ID` are set, every
 WhatsApp send just logs instead of sending — safe to leave unconfigured in
 development.
+
+### Instagram → WhatsApp AI auto-reply
+
+When someone messages the clinic on WhatsApp from an Instagram ad or profile
+"Message" button, `src/modules/whatsapp/whatsappBot.service.ts` can draft and
+send a reply automatically — reading the message, deciding whether it's safe
+to answer itself, and replying in a short, human tone. This is a *reply*
+(the customer messaged first), so unlike the reminders above it uses
+freeform text, not a template.
+
+**What it will and won't do, by design:**
+- It will describe what a treatment generally involves (using the live
+  Treatment catalog), help with booking, and answer general clinic
+  questions.
+- It will **never** state a price — pricing questions always get redirected
+  to booking a consultation, matching the website's existing "no fixed
+  price list" policy (see the public FAQ).
+- It will **never** answer anything about medical risk, side effects,
+  contraindications, or complications, and won't touch complaints — those
+  get escalated to a human instead (see below), never auto-replied.
+- It only engages with **Instagram-attributed** conversations — a first
+  message from a number with no Instagram referral and no matching existing
+  lead is left alone for staff to pick up manually, by design (scope
+  decision, not a limitation to fix later).
+
+**Escalation**: when the AI isn't confident, or the message needs a human
+(medical concern, complaint, anything ambiguous), the customer gets a brief
+holding reply ("I'm looping in one of our specialists...") and a `PENDING`
+`FollowUp` is created (channel `WHATSAPP`, due immediately) assigned to
+`WHATSAPP_BOT_ESCALATION_ASSIGNEE_EMAIL` — it shows up in the admin panel's
+existing Follow-ups page like any other follow-up.
+
+**Setup:**
+1. In the same Meta App used for the WhatsApp Business Platform above, go to
+   WhatsApp → Configuration → Webhook, and subscribe to the `messages`
+   field. Set the callback URL to `https://<your-api-domain>/api/v1/whatsapp/webhook`
+   and the verify token to whatever you set `WHATSAPP_WEBHOOK_VERIFY_TOKEN`
+   to.
+2. Set `WHATSAPP_APP_SECRET` (App Dashboard → Settings → Basic → App
+   Secret) — this is a different value from `WHATSAPP_ACCESS_TOKEN` and is
+   used to verify inbound deliveries are really from Meta.
+3. Set `ANTHROPIC_API_KEY` (get one from [console.anthropic.com](https://console.anthropic.com)).
+   Without it, every inbound message is escalated to staff instead of
+   auto-replied — a safe fallback, just not automated.
+4. Optionally set `WHATSAPP_BOT_ESCALATION_ASSIGNEE_EMAIL` to a specific
+   staff member's login email; otherwise escalations fall back to the first
+   Counselor/Receptionist account found.
+
+**Privacy note**: the customer's name, phone number, and message text are
+sent to Anthropic's API to generate each reply — factor this into your
+privacy policy/patient-data handling if you're in a regulated context (see
+[SECURITY.md](./SECURITY.md)).
 
 None of this blocks everyday clinic operations (patients, leads, treatments,
 pricing, enrollments, appointments, inventory, billing all work end-to-end
