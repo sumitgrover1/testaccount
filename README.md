@@ -350,14 +350,14 @@ freeform text, not a template.
 
 **What it will and won't do, by design:**
 - It will describe what a treatment generally involves (using the live
-  Treatment catalog), help with booking, and answer general clinic
-  questions.
+  Treatment catalog) and answer general clinic questions.
 - It will **never** state a price — pricing questions always get redirected
   to booking a consultation, matching the website's existing "no fixed
   price list" policy (see the public FAQ).
 - It will **never** answer anything about medical risk, side effects,
-  contraindications, or complications, and won't touch complaints — those
-  get escalated to a human instead (see below), never auto-replied.
+  contraindications, or complications, and won't touch complaints or
+  reschedule/cancel requests — those get escalated to a human instead (see
+  below), never auto-replied.
 - It only engages with **Instagram-attributed** conversations — a first
   message from a number with no Instagram referral and no matching existing
   lead is left alone for staff to pick up manually, by design (scope
@@ -369,6 +369,23 @@ holding reply ("I'm looping in one of our specialists...") and a `PENDING`
 `FollowUp` is created (channel `WHATSAPP`, due immediately) assigned to
 `WHATSAPP_BOT_ESCALATION_ASSIGNEE_EMAIL` — it shows up in the admin panel's
 existing Follow-ups page like any other follow-up.
+
+**Two structured workflows**, triggered either by the AI recognizing intent
+in free text, or by tapping a button from the menu (sent when a lead's
+message is just a greeting like "hi"/"menu"):
+- **Book an appointment** — asks for the treatment + preferred date/time,
+  then hands it to staff as a `FollowUp` to actually confirm (booking notes:
+  `"WhatsApp booking request: ..."`). There is deliberately **no real-time
+  availability/slot picker** — no doctor working-hours model exists in this
+  codebase yet, so the bot never creates an `Appointment` row itself; a
+  human always confirms the actual date/time with the patient. While
+  waiting for the lead's answer, that one reply is captured directly
+  (`Lead.whatsappPendingIntent`) rather than re-classified by the AI.
+- **Check my appointment** — a deterministic database lookup (never
+  AI-generated, so it can't invent a date) of the *converted patient's*
+  next upcoming `BOOKED` appointment. Since appointments belong to
+  `Patient`, not `Lead`, a lead that hasn't converted yet gets a "you
+  haven't booked with us yet, want to?" reply instead.
 
 **Setup:**
 1. In the same Meta App used for the WhatsApp Business Platform above, go to

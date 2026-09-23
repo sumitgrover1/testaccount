@@ -8,7 +8,7 @@ import { logger } from '../../config/logger';
 // parse heuristically.
 
 export interface BotDecision {
-  action: 'reply' | 'escalate';
+  action: 'reply' | 'escalate' | 'start_booking' | 'check_appointment';
   message?: string;
   escalationReason?: string;
 }
@@ -21,14 +21,14 @@ const RESPOND_TOOL = {
     properties: {
       action: {
         type: 'string',
-        enum: ['reply', 'escalate'],
+        enum: ['reply', 'escalate', 'start_booking', 'check_appointment'],
         description:
-          '"reply" for questions you can safely answer yourself (what a treatment involves, booking, general clinic info, redirecting pricing questions to a consultation). "escalate" for anything involving a medical concern, side effect, complication, complaint, or anything you are not fully confident answering.',
+          '"reply" for general questions you can safely answer yourself (what a treatment involves, general clinic info, redirecting pricing questions to a consultation). "start_booking" if the customer wants to book/schedule a new appointment — the app will handle asking for details, so just classify the intent, don\'t draft a message for this one. "check_appointment" if they\'re asking about an appointment they already have (when is it, do they have one) — the app looks this up itself. "escalate" for anything involving a medical concern, side effect, complication, complaint, a request to cancel/reschedule an existing appointment, or anything you are not fully confident answering.',
       },
       message: {
         type: 'string',
         description:
-          'The WhatsApp reply to send the customer. Required when action is "reply". 1-3 short sentences, warm and conversational, no markdown formatting, no more than one emoji and only if it fits naturally.',
+          'The WhatsApp reply to send the customer. Required (and only used) when action is "reply". 1-3 short sentences, warm and conversational, no markdown formatting, no more than one emoji and only if it fits naturally.',
       },
       escalationReason: {
         type: 'string',

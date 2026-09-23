@@ -141,6 +141,33 @@ export async function sendWhatsAppFreeformText(
   });
 }
 
+// Sends up to 3 tappable reply buttons alongside a body text — the WhatsApp
+// bot's menu entry point (see whatsappBot.service.ts). Same 24h-session
+// reply-only rule as sendWhatsAppFreeformText. A tapped button comes back
+// as its own inbound message (type "interactive", not "text") carrying the
+// button's id, which the bot matches to route the workflow.
+export async function sendWhatsAppButtons(
+  to: string,
+  bodyText: string,
+  buttons: { id: string; title: string }[],
+): Promise<NotificationResult> {
+  if (!env.WHATSAPP_ACCESS_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
+    logger.warn({ to }, 'WhatsApp buttons send skipped — WhatsApp Cloud API not configured');
+    return { success: false, error: 'WhatsApp Cloud API not configured' };
+  }
+  return postToWhatsAppGraphApi({
+    to: toWhatsAppRecipient(to),
+    type: 'interactive',
+    interactive: {
+      type: 'button',
+      body: { text: bodyText },
+      action: {
+        buttons: buttons.map((b) => ({ type: 'reply', reply: { id: b.id, title: b.title } })),
+      },
+    },
+  });
+}
+
 const consoleProvider = new ConsoleNotificationProvider();
 const whatsAppProvider =
   env.WHATSAPP_ACCESS_TOKEN && env.WHATSAPP_PHONE_NUMBER_ID ? new WhatsAppCloudApiProvider() : null;

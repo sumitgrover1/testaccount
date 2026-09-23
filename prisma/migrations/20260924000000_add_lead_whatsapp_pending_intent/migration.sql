@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `leads` ADD COLUMN `whatsappPendingIntent` ENUM('NONE', 'AWAITING_BOOKING_DETAILS') NOT NULL DEFAULT 'NONE';

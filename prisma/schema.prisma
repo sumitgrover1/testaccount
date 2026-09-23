@@ -78,6 +78,13 @@ enum LeadStatus {
   NO_RESPONSE
 }
 
+// See Lead.whatsappPendingIntent — what the WhatsApp bot is waiting to hear
+// back about from this lead, if anything.
+enum BotPendingIntent {
+  NONE
+  AWAITING_BOOKING_DETAILS
+}
+
 enum EnrollmentStatus {
   PENDING
   RUNNING
@@ -374,6 +381,11 @@ model Lead {
   leadScore              Int        @default(0)
   notes                  String?    @db.Text
   status                 LeadStatus @default(NEW)
+  // Tracks a multi-turn WhatsApp bot workflow in progress for this lead —
+  // e.g. "we just asked which treatment/date/time they want" — so the next
+  // inbound message is captured as the answer rather than re-classified
+  // from scratch. See whatsappBot.service.ts.
+  whatsappPendingIntent  BotPendingIntent @default(NONE)
 
   convertedPatientId     String?    @unique
   convertedPatient       Patient?   @relation(fields: [convertedPatientId], references: [id])
