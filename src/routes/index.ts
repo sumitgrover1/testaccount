@@ -18,6 +18,7 @@ import reviewsRoutes from '../modules/reviews/reviews.routes';
 import galleryRoutes from '../modules/gallery/gallery.routes';
 import blogRoutes from '../modules/blog/blog.routes';
 import locationsRoutes from '../modules/locations/locations.routes';
+import whatsappBotRoutes from '../modules/whatsapp/whatsappBot.routes';
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use('/reviews', reviewsRoutes);
 router.use('/gallery', galleryRoutes);
 router.use('/blog', blogRoutes);
 router.use('/locations', locationsRoutes);
+router.use('/whatsapp', whatsappBotRoutes);
 
 export default router;
