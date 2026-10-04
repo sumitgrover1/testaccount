@@ -446,6 +446,21 @@ The website targets Gurugram-area local search ("skin clinic Sector 86",
   (see "Setup" above) — a low-effort way to add pages that naturally target
   locality + service keywords together, on top of the 92+ general skin/hair
   articles already seeded.
+- `/services/[category]` — one dedicated landing page per treatment
+  category (Skin, Hair, Laser Hair Reduction, Body, Men's Grooming, Bridal,
+  Weight Loss), each with its own title/description, `BreadcrumbList` +
+  `Service` schema, and hand-written intro copy
+  (`website/src/lib/categoryContent.ts`). Deliberately **one page per
+  category, not per individual treatment** — most individual treatments
+  (especially the near-identical "Laser Hair Reduction — &lt;body part&gt;"
+  entries) don't have enough distinct substance for their own page without
+  reading as thin/duplicate content to search engines; category pages
+  target the higher-volume search terms people actually use ("laser hair
+  removal Gurgaon" far outranks "LHR back and shoulders Gurgaon"). Linked
+  from the `/services` hub page, included in `sitemap.ts` and `llms.txt`,
+  and rendered on demand (no `generateStaticParams`) since the backend
+  isn't guaranteed reachable at Docker build time — same pattern as
+  `/blog/[slug]`.
 
 ## Extending this scaffold
 

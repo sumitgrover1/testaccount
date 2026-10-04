@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { fetchPublicTreatments, type PublicTreatment } from '@/lib/api';
 import { siteConfig } from '@/config/site';
+import { slugify } from '@/lib/slug';
 import { CategoryIconBadge } from '@/lib/categoryIcon';
 
 const title = 'Skin & Hair Treatments';
@@ -52,7 +53,11 @@ export default async function ServicesPage() {
             <div key={category}>
               <div className="flex items-center gap-2">
                 <CategoryIconBadge category={category} className="h-5 w-5 text-brand-500" />
-                <h2 className="font-serif text-2xl text-brand-700">{category}</h2>
+                <h2 className="font-serif text-2xl text-brand-700">
+                  <Link href={`/services/${slugify(category)}`} className="hover:text-brand-600">
+                    {category}
+                  </Link>
+                </h2>
               </div>
               <div className="mt-6 grid gap-6 md:grid-cols-2">
                 {items.map((t) => (

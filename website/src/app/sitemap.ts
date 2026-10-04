@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
 import { fetchBlogPosts } from '@/lib/api';
+import { slugify } from '@/lib/slug';
+import { CATEGORY_CONTENT } from '@/lib/categoryContent';
 
 const routes = ['', '/about', '/services', '/gallery', '/testimonials', '/faq', '/blog', '/contact'];
 
@@ -10,6 +12,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(),
     changeFrequency: route === '' ? 'weekly' : 'monthly',
     priority: route === '' ? 1 : route === '/contact' || route === '/services' ? 0.9 : 0.6,
+  }));
+
+  // One dedicated landing page per treatment category — see
+  // lib/categoryContent.ts for why these are per-category rather than
+  // per-individual-treatment.
+  const categoryEntries: MetadataRoute.Sitemap = CATEGORY_CONTENT.map((c) => ({
+    url: `${siteConfig.url}/services/${slugify(c.category)}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.8,
   }));
 
   // The public blog listing is paged, but the sitemap needs every slug — the
@@ -23,5 +35,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticEntries, ...blogEntries];
+  return [...staticEntries, ...categoryEntries, ...blogEntries];
 }
