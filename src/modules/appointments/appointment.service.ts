@@ -1,6 +1,7 @@
 import { AppointmentStatus } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { env } from '../../config/env';
+import { logger } from '../../config/logger';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/AppError';
 import { recordAudit } from '../../middlewares/auditLog.middleware';
 import { notificationProvider } from '../../common/providers/notification.provider';
@@ -160,7 +161,42 @@ export async function completeAppointment(id: string, actorId: string) {
     resource: 'Appointment',
     resourceId: id,
   });
+
+  // Off-page SEO: ask for a Google review right after the visit, while it's
+  // still fresh — review volume/recency is a real local-ranking factor.
+  // Best-effort only: a WhatsApp failure here must never fail the
+  // appointment-completion request itself, so errors are logged, not thrown.
+  try {
+    await sendReviewRequest(updated.patient.fullName, updated.patient.mobileNumber);
+  } catch (err) {
+    logger.error({ err, appointmentId: id }, 'Failed to send post-appointment review request');
+  }
+
   return updated;
+}
+
+function buildGoogleReviewLink(): string | null {
+  return env.GOOGLE_PLACE_ID
+    ? `https://search.google.com/local/writereview?placeid=${env.GOOGLE_PLACE_ID}`
+    : null;
+}
+
+async function sendReviewRequest(patientName: string, mobileNumber: string): Promise<void> {
+  const reviewLink = buildGoogleReviewLink();
+  if (!reviewLink) {
+    logger.info('Review request skipped — GOOGLE_PLACE_ID not configured');
+    return;
+  }
+
+  await notificationProvider.send({
+    channel: 'WHATSAPP',
+    to: mobileNumber,
+    message: `Thanks for visiting Lumine Aesthetics, ${patientName}! We'd love your feedback — ${reviewLink}`,
+    // See README.md's WhatsApp setup section for the exact approved body
+    // text — params here are positional and must match its {{1}}/{{2}}.
+    templateName: env.WHATSAPP_REVIEW_REQUEST_TEMPLATE,
+    templateParams: [patientName, reviewLink],
+  });
 }
 
 export async function cancelAppointment(

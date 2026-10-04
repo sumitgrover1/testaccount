@@ -90,6 +90,12 @@ const envSchema = z.object({
   // parameters the code actually sends.
   WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE: z.string().default('appointment_reminder'),
   WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE: z.string().default('lead_followup_reminder'),
+  // Sent automatically when an appointment is marked COMPLETED (see
+  // appointment.service.ts's completeAppointment) — asks the patient for a
+  // Google review. Only sends if GOOGLE_PLACE_ID is also set, since that's
+  // what the review link is built from; otherwise this step is skipped
+  // entirely rather than sending a broken link.
+  WHATSAPP_REVIEW_REQUEST_TEMPLATE: z.string().default('review_request'),
 
   // Inbound WhatsApp automation (see whatsappBot module) — an Instagram-
   // originated lead's WhatsApp message gets an AI-drafted reply, sent as a
