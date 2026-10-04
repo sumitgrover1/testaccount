@@ -27,6 +27,7 @@
     "prisma:seed:catalog": "tsx prisma/seed-catalog.ts",
     "prisma:seed:blog": "tsx prisma/seed-blog.ts",
     "prisma:seed:blog:skin": "tsx prisma/seed-blog-skin.ts",
+    "prisma:seed:blog:local": "tsx prisma/seed-blog-local.ts",
     "audit": "npm audit --audit-level=moderate",
     "prepare": "husky"
   },

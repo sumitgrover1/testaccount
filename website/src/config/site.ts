@@ -25,6 +25,11 @@ export const siteConfig = {
   email: 'contact@luminehealthcare.in',
   instagramUrl: 'https://www.instagram.com/lumine_aesthetics_/',
   instagramHandle: '@lumine_aesthetics_',
+  // TODO: this is a starting guess based on the clinic's address alone —
+  // confirm/edit to the actual localities you draw patients from (used in
+  // the LocalBusiness schema's areaServed and the footer's "Serving"
+  // line, both for local/"near me" SEO).
+  areasServed: ['Sector 86', 'Pataudi Road', 'Sohna Road', 'Golf Course Road', 'New Gurgaon', 'Manesar'],
   // TODO: replace with real opening hours
   hours: [
     { days: 'Monday – Saturday', time: '10:00 AM – 7:00 PM' },

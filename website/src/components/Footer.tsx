@@ -40,6 +40,9 @@ export function Footer() {
               </p>
             ))}
           </div>
+          <p className="mt-4 text-xs text-charcoal-700">
+            Serving {siteConfig.city} &amp; nearby: {siteConfig.areasServed.join(', ')}
+          </p>
         </div>
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-charcoal-800">Contact</p>
