@@ -141,6 +141,15 @@ npm run prisma:seed:blog:skin
 
 Safe to re-run — skips any post whose slug already exists.
 
+Optionally, seed 2 Gurgaon-local-SEO blog articles (tagged "Gurgaon & Local
+Area"), attributed to the first Super Admin found:
+
+```bash
+npm run prisma:seed:blog:local
+```
+
+Safe to re-run — skips any post whose slug already exists.
+
 ### Scripts
 
 | Command | Purpose |
@@ -411,6 +420,32 @@ privacy policy/patient-data handling if you're in a regulated context (see
 None of this blocks everyday clinic operations (patients, leads, treatments,
 pricing, enrollments, appointments, inventory, billing all work end-to-end
 today) — see [SECURITY.md](./SECURITY.md) for the full gap list.
+
+## Local SEO (website)
+
+The website targets Gurugram-area local search ("skin clinic Sector 86",
+"near me", the Google Maps pack) via a few pieces, all driven from
+`website/src/config/site.ts`:
+
+- `siteConfig.areasServed` lists the specific localities the clinic draws
+  patients from (Sector 86, Pataudi Road, Sohna Road, etc.). It feeds the
+  `areaServed` field in the site-wide `LocalBusiness` schema
+  (`website/src/lib/structuredData.ts`) and the "Serving ..." line in the
+  footer. **This list is a starting guess based on the clinic's address
+  alone — edit it to the localities you actually serve.**
+- The `LocalBusiness` schema's `aggregateRating` is populated automatically
+  from the clinic's live Google rating (the same data the Testimonials page
+  already fetches) once `GOOGLE_PLACES_API_KEY`/`GOOGLE_PLACE_ID` are
+  configured on the backend — see "Public (unauthenticated) endpoints"
+  above. Omitted entirely until then, rather than showing a fake rating.
+- `siteConfig.address.latitude`/`longitude` are still a placeholder — right-
+  click the clinic's exact pin on Google Maps to get the real coordinates
+  and replace these, so the schema's `geo` field (and any map-pack
+  placement that relies on it) is accurate.
+- `npm run prisma:seed:blog:local` seeds 2 Gurgaon-localized blog articles
+  (see "Setup" above) — a low-effort way to add pages that naturally target
+  locality + service keywords together, on top of the 92+ general skin/hair
+  articles already seeded.
 
 ## Extending this scaffold
 

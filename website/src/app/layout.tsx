@@ -6,6 +6,7 @@ import { MobileStickyCta } from '@/components/MobileStickyCta';
 import { JsonLd } from '@/components/JsonLd';
 import { localBusinessSchema } from '@/lib/structuredData';
 import { siteConfig } from '@/config/site';
+import { fetchGoogleReviews } from '@/lib/api';
 import './globals.css';
 
 // title.template lets every page set only its own segment (e.g. "Services")
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
     'cosmetology clinic',
     'aesthetic clinic Gurugram',
     'best skin specialist Gurugram',
+    ...siteConfig.areasServed.map((area) => `skin clinic ${area}`),
     siteConfig.name,
   ],
   alternates: { canonical: '/' },
@@ -38,11 +40,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Feeds the clinic's live Google rating into the LocalBusiness schema
+  // (aggregateRating) when configured — see structuredData.ts. Reuses the
+  // same cached fetch the Testimonials page already makes, so this adds no
+  // extra Google API calls.
+  const googleReviews = await fetchGoogleReviews();
+
   return (
     <html lang="en">
       <body className="flex min-h-screen flex-col pb-16 md:pb-0">
-        <JsonLd data={localBusinessSchema()} />
+        <JsonLd data={localBusinessSchema(googleReviews.rating, googleReviews.totalReviews)} />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
