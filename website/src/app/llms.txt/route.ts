@@ -1,5 +1,7 @@
 import { siteConfig } from '@/config/site';
 import { fetchBlogPosts } from '@/lib/api';
+import { slugify } from '@/lib/slug';
+import { CATEGORY_CONTENT } from '@/lib/categoryContent';
 
 // A plain-text, LLM-oriented summary of the site, following the emerging
 // llms.txt convention (https://llmstxt.org) — a lightweight alternative to
@@ -11,6 +13,10 @@ import { fetchBlogPosts } from '@/lib/api';
 export const revalidate = 300;
 
 function buildLlmsTxt(blogLines: string[]): string {
+  const categoryLines = CATEGORY_CONTENT.map(
+    (c) => `- [${c.heading}](${siteConfig.url}/services/${slugify(c.category)})`,
+  ).join('\n');
+
   return `# ${siteConfig.name}
 
 > ${siteConfig.description}
@@ -27,6 +33,10 @@ ${siteConfig.name} is a doctor-led cosmetology, skin, and hair treatment clinic 
 - [FAQ](${siteConfig.url}/faq): Common questions about consultations, sessions, safety, and pricing.
 - [Contact](${siteConfig.url}/contact): Booking, phone, WhatsApp, and clinic address.
 - [Blog](${siteConfig.url}/blog): Educational articles on skin care, hair care, and weight management.
+
+## Service category pages
+
+${categoryLines}
 
 ## Contact
 
