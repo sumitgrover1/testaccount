@@ -300,7 +300,7 @@ doesn't have:
   exposes `sendReminder`/`sendDueReminders`, for an external scheduler
   (cron/queue) to call; no in-process scheduler is bundled.
 
-### WhatsApp automation (appointment reminders + lead follow-up nudges)
+### WhatsApp automation (appointment reminders, lead follow-up nudges, review requests)
 
 WhatsApp reminders go through the official **Meta Cloud API** — business-
 initiated messages (which reminders always are) must use a pre-approved
@@ -312,23 +312,24 @@ Meta Business Manager before this works.
    System User with `whatsapp_business_messaging` permission — see
    [Meta's Cloud API getting-started guide](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started).
 2. In Meta Business Manager → WhatsApp Manager → Message Templates, create
-   these two **Utility**-category templates and submit them for approval
+   these three **Utility**-category templates and submit them for approval
    (approval is usually near-instant to a few hours):
 
    | Template name | Body text |
    | --- | --- |
    | `appointment_reminder` | `Hi {{1}}, this is a reminder for your appointment at Lumine Aesthetics on {{2}} at {{3}}. Reply here if you need to reschedule.` |
    | `lead_followup_reminder` | `Hi {{1}}, this is a quick follow-up from Lumine Aesthetics. {{2}} Feel free to reply here or call us anytime.` |
+   | `review_request` | `Thanks for visiting Lumine Aesthetics, {{1}}! We'd love your feedback — could you leave us a quick Google review? {{2}}` |
 
    The `{{n}}` placeholders are positional and must match what the code
    sends — don't reword them without also updating `appointment.service.ts`
-   (`sendReminder`/`sendDueReminders`) and `followup.service.ts`
-   (`sendReminder`) accordingly.
+   (`sendReminder`/`sendDueReminders`/`completeAppointment`) and
+   `followup.service.ts` (`sendReminder`) accordingly.
 3. Set `WHATSAPP_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` (from WhatsApp
    Manager → API Setup) in `.env`. The template names/language above are
    the defaults — override `WHATSAPP_APPOINTMENT_REMINDER_TEMPLATE` /
-   `WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE` / `WHATSAPP_TEMPLATE_LANGUAGE` if
-   you name or localize yours differently.
+   `WHATSAPP_FOLLOWUP_REMINDER_TEMPLATE` / `WHATSAPP_REVIEW_REQUEST_TEMPLATE` /
+   `WHATSAPP_TEMPLATE_LANGUAGE` if you name or localize yours differently.
 4. Trigger sends from an external scheduler (there's no in-process cron):
    - `POST /api/v1/appointments/send-due-reminders` — bulk-reminds every
      `BOOKED` appointment in the next 24h that hasn't been reminded yet
@@ -343,6 +344,16 @@ Meta Business Manager before this works.
    On the VPS, the simplest way to do this is a `crontab -e` entry that
    `curl`s these endpoints with a staff/service account's bearer token on a
    schedule (e.g. hourly).
+5. **Review requests need no scheduler at all** — `completeAppointment`
+   (`POST /api/v1/appointments/:id/complete`, the same action staff already
+   take when a visit finishes) automatically sends the `review_request`
+   template right after, as a simple off-page-SEO lever: a fresh review
+   request right after the visit, while the experience is still top of
+   mind. This also requires `GOOGLE_PLACE_ID` (see "Public (unauthenticated)
+   endpoints" above) to build the review link — without it, this step is
+   skipped (logged, not sent) rather than sending a broken link. A failure
+   here (missing config, WhatsApp API error) is logged and never fails the
+   appointment-completion request itself.
 
 Until `WHATSAPP_ACCESS_TOKEN`/`WHATSAPP_PHONE_NUMBER_ID` are set, every
 WhatsApp send just logs instead of sending — safe to leave unconfigured in
