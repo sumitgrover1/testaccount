@@ -161,7 +161,13 @@ Paste any error you see here and I'll help you fix it.
 cd ~/app
 git pull
 docker compose up --build -d
+docker compose exec app npx prisma migrate deploy
 ```
+
+The `migrate deploy` step applies any new database changes that shipped
+since your last update — always run it after `git pull`, even if nothing
+in the release notes mentions the database, since it's a no-op (and safe)
+when there's nothing new to apply.
 
 ## Everyday commands
 
