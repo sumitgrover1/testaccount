@@ -16,6 +16,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # backend URL (can't be changed later without rebuilding this image).
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# Optional — Google Analytics 4 Measurement ID. Same build-time caveat as
+# above: blank means no analytics at all, not "disabled but present".
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
+ENV NEXT_PUBLIC_GA_MEASUREMENT_ID=$NEXT_PUBLIC_GA_MEASUREMENT_ID
 # This app has no public/ folder (no static assets needed yet) — ensure the
 # path exists so the runtime stage's COPY below never fails, whether or not
 # one gets added later.

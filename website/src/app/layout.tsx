@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { WhatsAppButton } from '@/components/WhatsAppButton';
@@ -56,6 +57,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Footer />
         <WhatsAppButton />
         <MobileStickyCta />
+        {/* Site-wide pageview/event tracking — optional, only loads once
+            NEXT_PUBLIC_GA_MEASUREMENT_ID is baked in at build time (it's a
+            NEXT_PUBLIC_ var, so this can't be toggled at runtime without
+            rebuilding). Admin panel intentionally has no analytics — no
+            public visitor behavior to track there. */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );
