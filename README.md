@@ -472,6 +472,18 @@ The website targets Gurugram-area local search ("skin clinic Sector 86",
   and rendered on demand (no `generateStaticParams`) since the backend
   isn't guaranteed reachable at Docker build time — same pattern as
   `/blog/[slug]`.
+- `/gurugram` — a dedicated city landing page (areas served, links to every
+  `/services/[category]` page, the lead-capture form, and the clinic's
+  address/map), for the higher-intent "skin clinic Gurugram" style search
+  that the homepage alone doesn't specifically target. Linked from the
+  footer's "Serving ..." line and included in `sitemap.ts`/`llms.txt`, but
+  deliberately **not** added to the main nav — the clinic has one location,
+  so a top-nav link literally reading "Gurugram" would be redundant for
+  visitors already on the site. If you later want pages for other NCR
+  cities (Delhi, Noida, Faridabad...), turn this into a `/locations/[city]`
+  dynamic route following the exact same pattern as `/services/[category]`
+  — it was kept as a single static page for now rather than building that
+  generalization for a single city.
 
 ## Extending this scaffold
 

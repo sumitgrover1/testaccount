@@ -27,6 +27,7 @@ ${siteConfig.name} is a doctor-led cosmetology, skin, and hair treatment clinic 
 
 - [Home](${siteConfig.url}/): Overview of the clinic and its approach.
 - [Services](${siteConfig.url}/services): Skin, hair, and aesthetic treatments offered, grouped by category.
+- [${siteConfig.city}](${siteConfig.url}/gurugram): Areas served near ${siteConfig.city} and how to book.
 - [About](${siteConfig.url}/about): The clinic's doctor-led approach and team.
 - [Gallery](${siteConfig.url}/gallery): Before/after results and clinic photos.
 - [Testimonials](${siteConfig.url}/testimonials): Patient reviews.

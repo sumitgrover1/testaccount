@@ -41,7 +41,9 @@ export function Footer() {
             ))}
           </div>
           <p className="mt-4 text-xs text-charcoal-700">
-            Serving {siteConfig.city} &amp; nearby: {siteConfig.areasServed.join(', ')}
+            <Link href="/gurugram" className="hover:text-brand-600">
+              Serving {siteConfig.city} &amp; nearby: {siteConfig.areasServed.join(', ')}
+            </Link>
           </p>
         </div>
         <div>
