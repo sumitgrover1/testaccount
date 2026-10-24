@@ -485,6 +485,22 @@ The website targets Gurugram-area local search ("skin clinic Sector 86",
   — it was kept as a single static page for now rather than building that
   generalization for a single city.
 
+## Analytics (website)
+
+The public website gets Google Analytics 4 via `@next/third-parties`'s
+`GoogleAnalytics` component in the root layout (`website/src/app/layout.tsx`)
+— set `NEXT_PUBLIC_GA_MEASUREMENT_ID` (a GA4 Measurement ID, e.g.
+`G-XXXXXXXXXX`, from [analytics.google.com](https://analytics.google.com))
+in `.env` and rebuild (`docker compose up --build -d website`). Leave it
+unset to run with no analytics at all — the component is only rendered
+when the variable is present, not rendered-but-inert.
+
+It's a `NEXT_PUBLIC_` variable, so it's baked into the client bundle at
+**build** time, not read at runtime — changing it later always needs a
+rebuild, not just a restart. The admin panel (`frontend/`) intentionally
+has no analytics wired up at all — it's an internal staff tool, not a
+public site with visitor behavior worth tracking.
+
 ## Extending this scaffold
 
 - Add a new domain module by following the existing `validation → service →

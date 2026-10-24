@@ -67,6 +67,7 @@ services:
       context: ./website
       args:
         NEXT_PUBLIC_API_BASE_URL: https://${API_DOMAIN:?set your backend API subdomain in .env, e.g. api.yourdomain.com}/api/v1
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
     depends_on:
       - app
     restart: unless-stopped
