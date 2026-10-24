@@ -4,14 +4,19 @@ import { fetchBlogPosts } from '@/lib/api';
 import { slugify } from '@/lib/slug';
 import { CATEGORY_CONTENT } from '@/lib/categoryContent';
 
-const routes = ['', '/about', '/services', '/gallery', '/testimonials', '/faq', '/blog', '/contact'];
+const routes = ['', '/about', '/services', '/gallery', '/testimonials', '/faq', '/blog', '/contact', '/gurugram'];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = routes.map((route) => ({
     url: `${siteConfig.url}${route}`,
     lastModified: new Date(),
     changeFrequency: route === '' ? 'weekly' : 'monthly',
-    priority: route === '' ? 1 : route === '/contact' || route === '/services' ? 0.9 : 0.6,
+    priority:
+      route === ''
+        ? 1
+        : route === '/contact' || route === '/services' || route === '/gurugram'
+          ? 0.9
+          : 0.6,
   }));
 
   // One dedicated landing page per treatment category — see
