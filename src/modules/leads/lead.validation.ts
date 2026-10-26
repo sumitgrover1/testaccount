@@ -55,6 +55,21 @@ export const listLeadsQuerySchema = paginationSchema.extend({
 });
 export type ListLeadsQuery = z.infer<typeof listLeadsQuerySchema>;
 
+// Same filters as listLeadsQuerySchema, minus pagination — the Excel export
+// always returns every matching lead in one file rather than one page's
+// worth, so page/limit don't apply.
+export const exportLeadsQuerySchema = z.object({
+  status: z.nativeEnum(LeadStatus).optional(),
+  source: z.nativeEnum(LeadSource).optional(),
+  assignedCounselorId: z.string().uuid().optional(),
+  search: z.string().trim().max(150).optional(),
+});
+export type ExportLeadsQuery = z.infer<typeof exportLeadsQuerySchema>;
+export type LeadFilterParams = Pick<
+  ListLeadsQuery,
+  'status' | 'source' | 'assignedCounselorId' | 'search'
+>;
+
 // Fields required to create the Patient record at conversion time — a Lead
 // doesn't carry gender/DOB/city/state, so these must be supplied then. Name,
 // mobile, and email fall back to the lead's values when omitted.

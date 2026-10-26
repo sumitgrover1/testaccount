@@ -1,4 +1,5 @@
 import { LeadSource, LeadStatus } from '@prisma/client';
+import ExcelJS from 'exceljs';
 import { prisma } from '../../config/database';
 import { BadRequestError, ConflictError, NotFoundError } from '../../common/errors/AppError';
 import { formatSequenceCode } from '../../common/utils/sequenceCode';
@@ -8,6 +9,8 @@ import type {
   ChangeLeadStatusInput,
   ConvertLeadInput,
   CreateLeadInput,
+  ExportLeadsQuery,
+  LeadFilterParams,
   ListLeadsQuery,
   UpdateLeadInput,
 } from './lead.validation';
@@ -83,8 +86,12 @@ export async function getLeadById(id: string) {
   return withLeadCode(lead);
 }
 
-export async function listLeads(query: ListLeadsQuery) {
-  const where = {
+// Shared between listLeads and exportLeadsToExcel so the Excel export always
+// matches exactly whatever's currently filtered on the Leads page — the
+// export button just calls export with the same query params the list view
+// is already using.
+function buildLeadFilterWhere(query: LeadFilterParams) {
+  return {
     ...(query.status ? { status: query.status } : {}),
     ...(query.source ? { source: query.source } : {}),
     ...(query.assignedCounselorId ? { assignedCounselorId: query.assignedCounselorId } : {}),
@@ -98,6 +105,10 @@ export async function listLeads(query: ListLeadsQuery) {
         }
       : {}),
   };
+}
+
+export async function listLeads(query: ListLeadsQuery) {
+  const where = buildLeadFilterWhere(query);
 
   const [items, total] = await Promise.all([
     prisma.lead.findMany({
@@ -118,6 +129,61 @@ export async function listLeads(query: ListLeadsQuery) {
       pages: Math.ceil(total / query.limit),
     },
   };
+}
+
+// Caps a single export to a sane upper bound rather than truly unbounded —
+// if a clinic ever has more leads than this, exporting in batches (filter
+// by date range/status) is more useful anyway than one huge file.
+const EXPORT_MAX_ROWS = 10000;
+
+/// Builds a real .xlsx workbook (not CSV) for every lead matching the given
+/// filters — reuses exactly the same filter logic as listLeads, so "export
+/// what I'm currently looking at" (e.g. source = WHATSAPP or INSTAGRAM, for
+/// the leads that came in as direct WhatsApp messages from Facebook/Instagram
+/// ads) is a single API call away from the admin panel's Leads page.
+export async function exportLeadsToExcel(query: ExportLeadsQuery): Promise<Buffer> {
+  const where = buildLeadFilterWhere(query);
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: EXPORT_MAX_ROWS,
+  });
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Leads');
+  sheet.columns = [
+    { header: 'Lead Code', key: 'leadCode', width: 12 },
+    { header: 'Full Name', key: 'fullName', width: 24 },
+    { header: 'Mobile Number', key: 'mobileNumber', width: 16 },
+    { header: 'Email', key: 'email', width: 28 },
+    { header: 'Source', key: 'source', width: 16 },
+    { header: 'Status', key: 'status', width: 20 },
+    { header: 'Lead Score', key: 'leadScore', width: 10 },
+    { header: 'Notes', key: 'notes', width: 40 },
+    { header: 'Next Follow-up At', key: 'nextFollowUpAt', width: 20 },
+    { header: 'Created At', key: 'createdAt', width: 20 },
+    { header: 'Converted At', key: 'convertedAt', width: 20 },
+  ];
+  sheet.getRow(1).font = { bold: true };
+
+  for (const lead of leads) {
+    sheet.addRow({
+      leadCode: toLeadCode(lead.leadNumber),
+      fullName: lead.fullName,
+      mobileNumber: lead.mobileNumber,
+      email: lead.email ?? '',
+      source: lead.source,
+      status: lead.status,
+      leadScore: lead.leadScore,
+      notes: lead.notes ?? '',
+      nextFollowUpAt: lead.nextFollowUpAt ?? '',
+      createdAt: lead.createdAt,
+      convertedAt: lead.convertedAt ?? '',
+    });
+  }
+
+  const arrayBuffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 export async function updateLead(id: string, input: UpdateLeadInput, actingUserId: string) {

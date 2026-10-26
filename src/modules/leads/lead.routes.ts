@@ -10,6 +10,7 @@ import {
   changeLeadStatusSchema,
   convertLeadSchema,
   createLeadSchema,
+  exportLeadsQuerySchema,
   idParamSchema,
   listLeadsQuerySchema,
   updateLeadSchema,
@@ -47,6 +48,14 @@ router.get(
   authorize(...LEAD_STAFF, Role.DOCTOR),
   validate({ query: listLeadsQuerySchema }),
   leadController.listLeads,
+);
+// Must come before '/:id' — otherwise Express would try to match "export"
+// as a lead id.
+router.get(
+  '/export',
+  authorize(...LEAD_STAFF, Role.DOCTOR),
+  validate({ query: exportLeadsQuerySchema }),
+  leadController.exportLeads,
 );
 router.get(
   '/:id',

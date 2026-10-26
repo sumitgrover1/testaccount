@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 import * as leadsApi from '@/lib/api/leads';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
@@ -53,15 +53,31 @@ export default function LeadsPage() {
     onError: (err) => showError(getApiErrorMessage(err, 'Failed to create lead')),
   });
 
+  const exportMutation = useMutation({
+    mutationFn: () =>
+      leadsApi.exportLeads({
+        search: search || undefined,
+        status: status || undefined,
+        source: source || undefined,
+      }),
+    onSuccess: () => showSuccess('Export downloaded'),
+    onError: (err) => showError(getApiErrorMessage(err, 'Failed to export leads')),
+  });
+
   return (
     <div>
       <PageHeader
         title="Leads"
         description="Enquiry pipeline from every source"
         action={
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" /> New Lead
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => exportMutation.mutate()} isLoading={exportMutation.isPending}>
+              <Download className="h-4 w-4" /> Export to Excel
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4" /> New Lead
+            </Button>
+          </div>
         }
       />
 

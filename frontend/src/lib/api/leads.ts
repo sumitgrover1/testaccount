@@ -29,6 +29,27 @@ export async function listLeads(params: {
   return res.data;
 }
 
+// Downloads an .xlsx of every lead matching the given filters (no
+// pagination — this is meant to match whatever the Leads page is currently
+// filtered to, e.g. source=INSTAGRAM for WhatsApp leads coming in from
+// Facebook/Instagram ads) and triggers a browser save-as.
+export async function exportLeads(params: {
+  status?: LeadStatus;
+  source?: LeadSource;
+  assignedCounselorId?: string;
+  search?: string;
+}) {
+  const res = await apiClient.get<Blob>('/leads/export', { params, responseType: 'blob' });
+  const url = URL.createObjectURL(res.data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `leads-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export async function getLead(id: string) {
   const res = await apiClient.get<ApiEnvelope<Lead>>(`/leads/${id}`);
   return res.data.data;
