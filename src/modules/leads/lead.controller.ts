@@ -7,6 +7,7 @@ import type {
   ChangeLeadStatusInput,
   ConvertLeadInput,
   CreateLeadInput,
+  ExportLeadsQuery,
   IdParam,
   ListLeadsQuery,
   UpdateLeadInput,
@@ -36,6 +37,18 @@ export const listLeads = asyncHandler(async (req: Request, res: Response) => {
   const query = req.query as unknown as ListLeadsQuery;
   const result = await leadService.listLeads(query);
   res.status(200).json({ data: result.items, pagination: result.pagination });
+});
+
+export const exportLeads = asyncHandler(async (req: Request, res: Response) => {
+  const query = req.query as unknown as ExportLeadsQuery;
+  const buffer = await leadService.exportLeadsToExcel(query);
+  const filename = `leads-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  );
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.status(200).send(buffer);
 });
 
 export const updateLead = asyncHandler(async (req: Request, res: Response) => {
